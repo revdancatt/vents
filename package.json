@@ -1,0 +1,25 @@
+{
+  "name": "vents",
+  "version": "1.0.0",
+  "description": "A structural project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://revdancatt@github.com/revdancatt/vents.git"
+  },
+  "keywords": [
+    "fxhash"
+  ],
+  "author": "revdancatt",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/revdancatt/vents/issues"
+  },
+  "homepage": "https://github.com/revdancatt/vents#readme",
+  "devDependencies": {
+    "standard": "^17.0.0"
+  }
+}
