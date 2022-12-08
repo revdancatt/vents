@@ -104,6 +104,32 @@ const decideThings = (index) => {
   // If we're all out...
   if (features.layoutMode === 'All Out Everywhere All At Once') features.tileMap[index].ventType = 'out'
 
+  // If we're in a pattern then work out what to do
+  if (features.layoutMode === 'Pattern') {
+    // if it's a checkerboard pattern, then we need to do that
+    if (features.pattern === 'Checkerboard') {
+      const x = parseInt(index.split(',')[0], 10) / 4
+      const y = parseInt(index.split(',')[1], 10) / 4
+      let isChecked = false
+      // Now work out if we are on an even or odd column
+      if (parseInt(x, 10) % 2 === 0) isChecked = true
+      // Now work out if we are on an even or odd row
+      if (parseInt(y, 10) % 2 === 0) isChecked = !isChecked
+      // If startOnZero then we need to flip the check
+      if (features.startOnZero) isChecked = !isChecked
+
+      // Based on the subPattern we need to do different things
+      if (features.subPattern === 'Inny') if (isChecked) features.tileMap[index].ventType = 'in'
+      if (features.subPattern === 'Outy') if (isChecked) features.tileMap[index].ventType = 'out'
+      if (features.subPattern === 'Flip') {
+        if (isChecked) {
+          features.tileMap[index].ventType = 'in'
+        } else {
+          features.tileMap[index].ventType = 'out'
+        }
+      }
+    }
+  }
   // Work out the size of the border if needed
   if (features.borderSize === 'Large') features.tileMap[index].borderSize = 0.33
   if (features.borderSize === 'Small') features.tileMap[index].borderSize = 0.1
@@ -125,12 +151,49 @@ const makeFeatures = () => {
   features.layoutMode = 'Random'
   features.placementChance = 0
   features.innyChance = 0.5
-  features.firstDivisionChance = 0.9
+  features.firstDivisionChance = 0.1
   features.secondDivisionChance = 0.1
+
+  if (fxrand() < 0.20) features.layoutMode = 'Pattern'
+
+  // If the layout mode is Pattern, then we need to work out what pattern we're going to use
+  if (features.layoutMode === 'Pattern') {
+    // There is a chance it's checkerboard
+    if (fxrand() < 0.999) {
+      features.pattern = 'Checkerboard'
+      // What type of checkerboard?
+      features.subPattern = 'Flip'
+      if (fxrand() < 0.75) {
+        features.subPattern = 'Inny'
+        if (fxrand() < 0.5) features.subPattern = 'Outy'
+      }
+      // Do we start on the first or second tile?
+      features.startOnZero = fxrand() < 0.5
+      // If it's checkerboard, then we want to make sure there's no divisions
+      features.firstDivisionChance = 0
+    }
+  }
 
   // The vent has a size
   features.borderSize = 'Normal'
-  features.borderSize = 'Random'
+  // Most of the time the vent size is normal, but sometimes we'll do something different
+  if (fxrand() < 0.5) {
+    // There's a chance we make the border smaller
+    if (fxrand() < 0.2) {
+      features.borderSize = 'Small'
+      if (fxrand() < 0.66) {
+        if (fxrand() < 0.5) {
+          features.borderSize = 'Tiny'
+        } else {
+          features.borderSize = 'None'
+        }
+      }
+    } else {
+      features.borderSize = 'Large'
+    }
+    // After all that, there's still a 10% chance we'll make it random
+    if (fxrand() < 0.1 && features.layoutMode !== 'Pattern') features.borderSize = 'Random'
+  }
 
   // If we are random, there's a small chance we'll do something different
   if (fxrand() > 0.8) {
@@ -147,9 +210,14 @@ const makeFeatures = () => {
 
   if (features.layoutMode === 'Random') {
     // Pick the chance of something being placed
-    features.placementChance = fxrand() * 0.9 + 0.1
+    features.placementChance = fxrand() * 0.6 + 0.2
     // And now the chance it'll be an "inny" or an "outy"
-    features.innyChance = fxrand()
+    features.innyChance = fxrand() * 0.8 + 0.1
+    // There is a 10% chance we'll make them either all in or all out
+    if (fxrand() < 0.1) {
+      features.innyChance = 0
+      if (fxrand() < 0.5) features.innyChance = 1
+    }
   }
 
   // The final grid map will be 4x the number of tiles
@@ -204,12 +272,27 @@ const makeFeatures = () => {
       }
     }
   }
+
+  // Sometimes we show noise
+  features.showNoise = fxrand() < 0.5
+  // We want 10,000 random points
+  features.noisePoints = []
+  for (let i = 0; i < 500000; i++) {
+    features.noisePoints.push({
+      x: fxrand(),
+      y: fxrand(),
+      shade: fxrand() < 0.5 ? 255 : 0
+    })
+  }
 }
 
 //  Call the above make features, so we'll have the window.$fxhashFeatures available
 //  for fxhash
 makeFeatures()
-console.log(features)
+const copyFeatures = JSON.parse(JSON.stringify(features))
+delete copyFeatures.tileMap
+delete copyFeatures.noisePoints
+console.table(copyFeatures)
 
 const init = async () => {
   //  I should add a timer to this, but really how often to people who aren't
@@ -441,6 +524,17 @@ const drawCanvas = async () => {
 
   ctx.restore()
 
+  // If there's noise then we need to add it
+  if (features.showNoise) {
+    // Work out the offset
+    const offset = w / 3000
+    // Loop throught the noise points and add them
+    for (let i = 0; i < features.noisePoints.length; i++) {
+      ctx.fillStyle = `rgba(${features.noisePoints[i].shade},${features.noisePoints[i].shade},${features.noisePoints[i].shade},0.05)`
+      ctx.fillRect((features.noisePoints[i].x * w) - offset, (features.noisePoints[i].y * h) - offset, offset * 2, offset * 2)
+    }
+  }
+
   if (!thumbnailTaken) {
     thumbnailTaken = true
     fxpreview()
@@ -471,6 +565,13 @@ document.addEventListener('keypress', async (e) => {
   if (e.key === 'h') {
     highRes = !highRes
     console.log('Highres mode is now', highRes)
+    await layoutCanvas()
+  }
+
+  // If the key is n, toggle the noise
+  if (e.key === 'n') {
+    features.showNoise = !features.showNoise
+    console.log('Noise is now', features.showNoise)
     await layoutCanvas()
   }
 })
