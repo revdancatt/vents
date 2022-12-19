@@ -153,6 +153,7 @@ const makeFeatures = () => {
   features.innyChance = 0.5
   features.firstDivisionChance = 0.1
   features.secondDivisionChance = 0.1
+  features.shadowHeightMod = 0.5
 
   if (fxrand() < 0.20) features.layoutMode = 'Pattern'
 
@@ -227,8 +228,10 @@ const makeFeatures = () => {
   // Loop through y and x for the number of tiles
   for (let y = 0; y < features.tiles; y++) {
     for (let x = 0; x < features.tiles; x++) {
-      const level = 0
+      let level = 0
       const tileSize = 4
+
+      if (fxrand() < 0.25) level = 1
       // We can do recursion, but it's a pain in the ass to debug, so we are going to do this
       // in a gnarly long way
       // Put the current level into the tileMap, to do this we loop from the x, y multiplied by the tileSize
@@ -252,17 +255,31 @@ const makeFeatures = () => {
         // Split the tile
         for (let stepy = 0; stepy <= 2; stepy += 2) {
           for (let stepx = 0; stepx <= 2; stepx += 2) {
+            let nextLevel = level
+            if (nextLevel === 0) {
+              if (fxrand() < 0.25) {
+                nextLevel = 1
+              }
+            }
             // But we may split it even more
             if (fxrand() > features.secondDivisionChance) {
               const index = `${x * tileSize + stepx},${y * tileSize + stepy}`
               features.tileMap[index].tileSize = 2
+              features.tileMap[index].level = nextLevel
               decideThings(index)
             } else {
               // Split it even more
+              let nextNextLevel = nextLevel
+              if (nextNextLevel === 0) {
+                if (fxrand() < 0.25) {
+                  nextNextLevel = 1
+                }
+              }
               for (let stepy2 = 0; stepy2 <= 1; stepy2++) {
                 for (let stepx2 = 0; stepx2 <= 1; stepx2++) {
                   const index = `${x * tileSize + stepx + stepx2},${y * tileSize + stepy + stepy2}`
                   features.tileMap[index].tileSize = 1
+                  features.tileMap[index].level = nextNextLevel
                   decideThings(index)
                 }
               }
@@ -298,6 +315,7 @@ makeFeatures()
 const copyFeatures = JSON.parse(JSON.stringify(features))
 delete copyFeatures.tileMap
 delete copyFeatures.noisePoints
+delete copyFeatures.wireframeRandomness
 console.table(copyFeatures)
 
 const init = async () => {
@@ -359,37 +377,196 @@ const layoutCanvas = async () => {
   drawCanvas()
 }
 
-const drawCanvas = async () => {
-  //  Let the preloader know that we've hit this function at least once
-  drawn = true
-
+const drawHeightlghts = (level) => {
   // Grab all the canvas stuff
   const canvas = document.getElementById('target')
   const ctx = canvas.getContext('2d')
   const w = canvas.width
   const h = canvas.height
 
-  ctx.fillStyle = '#ECE3D0'
-  ctx.fillRect(0, 0, w, h)
+  ctx.lineWidth = w / (500 * features.tiles)
+
+  // const maxMiniTiles = features.tiles * 4
+  const miniTileWidth = w / (features.tiles * 4)
+  const miniTileHeight = h / (features.tiles * 4)
+  const shadowHeight = miniTileHeight * features.shadowHeightMod
+
+  ctx.save()
+  ctx.scale(features.scaleDown, features.scaleDown)
+  ctx.translate(w / features.tiles / 4, h / features.tiles / 4)
+  // Now we need to loop through the tileMap and draw the tiles
+  const size = [4, 2, 1]
+  // Loop through the size array
+  for (let i = 0; i <= size.length - 1; i++) {
+    const thisSize = size[i]
+    for (let y = features.tiles * 4 - 1; y >= 0; y--) {
+      for (let x = features.tiles * 4 - 1; x >= 0; x--) {
+        const thisTile = features.tileMap[`${x},${y}`]
+        if (thisTile.drawMe && thisTile.level === level && thisTile.tileSize === thisSize) {
+          // Work out the four corners of the tile
+          const corners = {
+            tl: {
+              x: x * miniTileWidth,
+              y: y * miniTileHeight
+            }
+          }
+          corners.tr = {
+            x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
+            y: corners.tl.y
+          }
+          corners.bl = {
+            x: corners.tl.x,
+            y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
+          }
+          corners.br = {
+            x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
+            y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
+          }
+
+          // if we have a shadowHeight then we need to draw a top ledge
+          const topColourHSL = rgbToHsl(hexToRgb(features.tileMap[`${x},${y}`].tileColour1.value))
+          const bottomColourHSL = rgbToHsl(hexToRgb(features.tileMap[`${x},${y}`].tileColour2.value))
+          ctx.fillStyle = `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.min(topColourHSL.l * 1.25, 90)}%)`
+          ctx.beginPath()
+          ctx.moveTo(corners.tl.x, corners.tl.y)
+          ctx.lineTo(corners.tr.x, corners.tr.y)
+          ctx.lineTo(corners.tr.x + shadowHeight, corners.tr.y + shadowHeight)
+          ctx.lineTo(corners.tl.x + shadowHeight, corners.tl.y + shadowHeight)
+          ctx.closePath()
+          ctx.fill()
+
+          // Now we want to draw a red square in the top left corner which we do by translating
+          // to the top left
+          ctx.save()
+          ctx.translate(corners.tl.x, corners.tl.y)
+          ctx.transform(1, 1, 0, 1, 0, 0)
+          const gradient = ctx.createLinearGradient(0, 0, 0, thisTile.tileSize * miniTileHeight)
+          gradient.addColorStop(0, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.min(topColourHSL.l * 1.15, 90)}%)`)
+          gradient.addColorStop(1, `hsl(${bottomColourHSL.h}, ${bottomColourHSL.s}%, ${Math.min(bottomColourHSL.l * 1.15, 90)}%)`)
+
+          ctx.fillStyle = gradient
+          ctx.strokeStyle = gradient
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          ctx.moveTo(0, 0)
+          ctx.lineTo(shadowHeight, 0)
+          ctx.lineTo(shadowHeight, (thisTile.tileSize * miniTileHeight))
+          ctx.lineTo(0, (thisTile.tileSize * miniTileHeight))
+          ctx.closePath()
+          ctx.fill()
+          ctx.stroke()
+          ctx.restore()
+        }
+      }
+    }
+  }
+
+  ctx.restore()
+}
+
+const drawShadows = (level) => {
+  // Grab all the canvas stuff
+  const canvas = document.getElementById('target')
+  const ctx = canvas.getContext('2d')
+  const w = canvas.width
+  const h = canvas.height
 
   ctx.lineWidth = w / (500 * features.tiles)
 
   // const maxMiniTiles = features.tiles * 4
   const miniTileWidth = w / (features.tiles * 4)
   const miniTileHeight = h / (features.tiles * 4)
+  const shadowHeight = miniTileHeight * features.shadowHeightMod
 
   ctx.save()
   ctx.scale(features.scaleDown, features.scaleDown)
   ctx.translate(w / features.tiles / 4, h / features.tiles / 4)
-  let wireframeRandomPointer = 0
-  const wireframeLoop = 5
-  const wMod = features.tiles * 40
-
   // Now we need to loop through the tileMap and draw the tiles
   for (let y = features.tiles * 4 - 1; y >= 0; y--) {
     for (let x = features.tiles * 4 - 1; x >= 0; x--) {
       const thisTile = features.tileMap[`${x},${y}`]
-      if (thisTile.drawMe) {
+      if (thisTile.drawMe && thisTile.level === level) {
+        // Work out the four corners of the tile
+        const corners = {
+          tl: {
+            x: x * miniTileWidth,
+            y: y * miniTileHeight
+          }
+        }
+        corners.tr = {
+          x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
+          y: corners.tl.y
+        }
+        corners.bl = {
+          x: corners.tl.x,
+          y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
+        }
+        corners.br = {
+          x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
+          y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
+        }
+
+        ctx.save()
+        ctx.beginPath()
+        ctx.moveTo(corners.tl.x + shadowHeight, corners.tl.y + shadowHeight)
+        ctx.lineTo(corners.tr.x + shadowHeight, corners.tr.y + shadowHeight)
+        ctx.lineTo(corners.br.x + shadowHeight, corners.br.y + shadowHeight)
+        ctx.lineTo(corners.bl.x + shadowHeight, corners.bl.y + shadowHeight)
+        ctx.closePath()
+        ctx.clip()
+
+        ctx.strokeStyle = 'rgba(0,0,0,0.1)'
+
+        ctx.beginPath()
+        ctx.moveTo(corners.tr.x + shadowHeight, corners.tr.y + shadowHeight)
+        ctx.lineTo(corners.br.x + shadowHeight, corners.br.y + shadowHeight)
+        ctx.lineTo(corners.bl.x + shadowHeight, corners.bl.y + shadowHeight)
+        ctx.lineWidth = w / 400
+        // ctx.stroke()
+        ctx.lineWidth = w / 800
+        ctx.stroke()
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)'
+        ctx.beginPath()
+        ctx.moveTo(corners.bl.x + shadowHeight, corners.bl.y + shadowHeight)
+        ctx.lineTo(corners.tl.x + shadowHeight, corners.tl.y + shadowHeight)
+        ctx.lineTo(corners.tr.x + shadowHeight, corners.tr.y + shadowHeight)
+        // ctx.stroke()
+
+        ctx.restore()
+      }
+    }
+  }
+
+  ctx.restore()
+}
+
+const drawTiles = (level) => {
+  // Grab all the canvas stuff
+  const canvas = document.getElementById('target')
+  const ctx = canvas.getContext('2d')
+  const w = canvas.width
+  const h = canvas.height
+
+  ctx.lineWidth = w / (500 * features.tiles)
+
+  // const maxMiniTiles = features.tiles * 4
+  const miniTileWidth = w / (features.tiles * 4)
+  const miniTileHeight = h / (features.tiles * 4)
+  let shadowHeight = miniTileHeight * features.shadowHeightMod
+  if (level === 0) shadowHeight = 0
+
+  ctx.save()
+  ctx.scale(features.scaleDown, features.scaleDown)
+  ctx.translate(w / features.tiles / 4 + shadowHeight, h / features.tiles / 4 + shadowHeight)
+  let wireframeRandomPointer = 0
+  const wireframeLoop = 5
+  const wMod = features.tiles * 40
+  // Now we need to loop through the tileMap and draw the tiles
+  for (let y = features.tiles * 4 - 1; y >= 0; y--) {
+    for (let x = features.tiles * 4 - 1; x >= 0; x--) {
+      const thisTile = features.tileMap[`${x},${y}`]
+      if (thisTile.drawMe && thisTile.level === level) {
         // Work out the four corners of the tile
         const corners = {
           tl: {
@@ -619,6 +796,235 @@ const drawCanvas = async () => {
   }
 
   ctx.restore()
+}
+
+const drawCanvas = async () => {
+  //  Let the preloader know that we've hit this function at least once
+  drawn = true
+
+  const canvas = document.getElementById('target')
+  const ctx = canvas.getContext('2d')
+  const w = canvas.width
+  const h = canvas.height
+
+  ctx.fillStyle = '#ECE3D0'
+  ctx.fillRect(0, 0, w, h)
+
+  ctx.lineWidth = w / (500 * features.tiles)
+
+  // const maxMiniTiles = features.tiles * 4
+  const miniTileWidth = w / (features.tiles * 4)
+  const miniTileHeight = h / (features.tiles * 4)
+
+  const wireframeRandomPointer = 0
+  const wireframeLoop = 5
+  const wMod = features.tiles * 40
+
+  ctx.save()
+  ctx.scale(features.scaleDown, features.scaleDown)
+  ctx.translate(w / features.tiles / 4, h / features.tiles / 4)
+
+  // Work out what the max tile index is
+  const maxTileIndex = (features.tiles - 1) * 2
+  for (let index = maxTileIndex; index >= 0; index--) {
+    for (let y1 = features.tiles - 1; y1 >= 0; y1--) {
+      for (let x1 = features.tiles - 1; x1 >= 0; x1--) {
+        const tileIndex = x1 + y1
+        if (tileIndex === index) {
+          //   Now do the inner tiles
+          for (let y2 = 1; y2 >= 0; y2--) {
+            for (let x2 = 1; x2 >= 0; x2--) {
+              for (let y3 = 1; y3 >= 0; y3--) {
+                for (let x3 = 1; x3 >= 0; x3--) {
+                  const x = x1 * 4 + x2 * 2 + x3
+                  const y = y1 * 4 + y2 * 2 + y3
+                  const thisTile = features.tileMap[`${x},${y}`]
+                  if (thisTile.drawMe) {
+                    let shadowHeight = miniTileHeight * features.shadowHeightMod
+                    if (thisTile.level === 0) shadowHeight = 0
+                    ctx.save()
+                    ctx.translate(shadowHeight, shadowHeight)
+
+                    // Work out the four corners of the tile
+                    const corners = {
+                      tl: {
+                        x: x * miniTileWidth,
+                        y: y * miniTileHeight
+                      }
+                    }
+                    corners.tr = {
+                      x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
+                      y: corners.tl.y
+                    }
+                    corners.bl = {
+                      x: corners.tl.x,
+                      y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
+                    }
+                    corners.br = {
+                      x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
+                      y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
+                    }
+
+                    // We are going to create a gradient from the top left corner to the bottom left corner
+                    // from tileColour1 to tileColour2
+                    const gradient = ctx.createLinearGradient(corners.tl.x, corners.tl.y, corners.tl.x, corners.bl.y)
+                    gradient.addColorStop(0, thisTile.tileColour1.value)
+                    gradient.addColorStop(1, thisTile.tileColour2.value)
+                    ctx.fillStyle = gradient
+
+                    ctx.beginPath()
+                    ctx.moveTo(corners.tl.x, corners.tl.y)
+                    ctx.lineTo(corners.tr.x, corners.tr.y)
+                    ctx.lineTo(corners.br.x, corners.br.y)
+                    ctx.lineTo(corners.bl.x, corners.bl.y)
+                    ctx.closePath()
+                    ctx.fill()
+
+                    if (thisTile.level === 1) {
+                      // Work out the colours
+                      const topColourHSL = rgbToHsl(hexToRgb(thisTile.tileColour1.value))
+                      const bottomColourHSL = rgbToHsl(hexToRgb(thisTile.tileColour2.value))
+                      //   Draw the top edge
+                      ctx.fillStyle = thisTile.tileColour1.value
+                      ctx.beginPath()
+                      ctx.moveTo(corners.tl.x - shadowHeight, corners.tl.y - shadowHeight)
+                      ctx.lineTo(corners.tr.x - shadowHeight, corners.tr.y - shadowHeight)
+                      ctx.lineTo(corners.tr.x, corners.tr.y)
+                      ctx.lineTo(corners.tl.x, corners.tl.y)
+                      ctx.closePath()
+                      ctx.fill()
+                      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'
+                      ctx.fill()
+
+                      //   Draw the left edge
+                      ctx.save()
+                      ctx.translate(corners.tl.x - shadowHeight, corners.tl.y - shadowHeight)
+                      ctx.transform(1, 1, 0, 1, 0, 0)
+
+                      const gradient = ctx.createLinearGradient(0, 0, 0, thisTile.tileSize * miniTileHeight)
+                      gradient.addColorStop(0, thisTile.tileColour1.value)
+                      gradient.addColorStop(1, thisTile.tileColour2.value)
+
+                      ctx.fillStyle = gradient
+                      ctx.strokeStyle = gradient
+                      ctx.lineWidth = 1
+                      ctx.beginPath()
+                      ctx.moveTo(0, 0)
+                      ctx.lineTo(shadowHeight, 0)
+                      ctx.lineTo(shadowHeight, (thisTile.tileSize * miniTileHeight))
+                      ctx.lineTo(0, (thisTile.tileSize * miniTileHeight))
+                      ctx.closePath()
+                      ctx.fill()
+                      ctx.stroke()
+                      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
+                      ctx.fill()
+
+                      ctx.restore()
+                    }
+                    ctx.restore()
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  /*
+  for (let x = features.tiles * 4 - 1; x >= 0; x--) {
+    for (let y = features.tiles * 4 - 1; y >= 0; y--) {
+      const thisTile = features.tileMap[`${x},${y}`]
+      const thisTileIndex = x + y
+      if (thisTile.drawMe) {
+        let shadowHeight = miniTileHeight * features.shadowHeightMod
+        if (thisTile.level === 0) shadowHeight = 0
+        ctx.save()
+        ctx.translate(shadowHeight, shadowHeight)
+
+        // Work out the four corners of the tile
+        const corners = {
+          tl: {
+            x: x * miniTileWidth,
+            y: y * miniTileHeight
+          }
+        }
+        corners.tr = {
+          x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
+          y: corners.tl.y
+        }
+        corners.bl = {
+          x: corners.tl.x,
+          y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
+        }
+        corners.br = {
+          x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
+          y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
+        }
+
+        // We are going to create a gradient from the top left corner to the bottom left corner
+        // from tileColour1 to tileColour2
+        const gradient = ctx.createLinearGradient(corners.tl.x, corners.tl.y, corners.tl.x, corners.bl.y)
+        gradient.addColorStop(0, thisTile.tileColour1.value)
+        gradient.addColorStop(1, thisTile.tileColour2.value)
+        ctx.fillStyle = gradient
+
+        ctx.beginPath()
+        ctx.moveTo(corners.tl.x, corners.tl.y)
+        ctx.lineTo(corners.tr.x, corners.tr.y)
+        ctx.lineTo(corners.br.x, corners.br.y)
+        ctx.lineTo(corners.bl.x, corners.bl.y)
+        ctx.closePath()
+        ctx.fill()
+
+        // If we are level 1 then we need to add the top and side edges
+        if (thisTile.level === 1) {
+          // Work out the colours
+          const topColourHSL = rgbToHsl(hexToRgb(features.tileMap[`${x},${y}`].tileColour1.value))
+          const bottomColourHSL = rgbToHsl(hexToRgb(features.tileMap[`${x},${y}`].tileColour2.value))
+          //   Draw the top edge
+          ctx.fillStyle = `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.min(topColourHSL.l * 1.25, 90)}%)`
+          ctx.beginPath()
+          ctx.moveTo(corners.tl.x - shadowHeight, corners.tl.y - shadowHeight)
+          ctx.lineTo(corners.tr.x - shadowHeight, corners.tr.y - shadowHeight)
+          ctx.lineTo(corners.tr.x, corners.tr.y)
+          ctx.lineTo(corners.tl.x, corners.tl.y)
+          ctx.closePath()
+          ctx.fill()
+          //   Draw the left edge
+          ctx.save()
+          ctx.translate(corners.tl.x - shadowHeight, corners.tl.y - shadowHeight)
+          ctx.transform(1, 1, 0, 1, 0, 0)
+
+          const gradient = ctx.createLinearGradient(0, 0, 0, thisTile.tileSize * miniTileHeight)
+          gradient.addColorStop(0, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.min(topColourHSL.l * 1.15, 90)}%)`)
+          gradient.addColorStop(1, `hsl(${bottomColourHSL.h}, ${bottomColourHSL.s}%, ${Math.min(bottomColourHSL.l * 1.15, 90)}%)`)
+
+          ctx.fillStyle = gradient
+          ctx.strokeStyle = gradient
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          ctx.moveTo(0, 0)
+          ctx.lineTo(shadowHeight, 0)
+          ctx.lineTo(shadowHeight, (thisTile.tileSize * miniTileHeight))
+          ctx.lineTo(0, (thisTile.tileSize * miniTileHeight))
+          ctx.closePath()
+          ctx.fill()
+          ctx.stroke()
+
+          ctx.restore()
+        }
+
+        ctx.restore()
+      }
+    }
+  }
+  */
+  ctx.restore()
+  // drawTiles(0)
+  // drawHeightlghts(1)
+  // drawShadows(1)
+  // drawTiles(1)
 
   // If there's noise then we need to add it
   if (features.showNoise) {
