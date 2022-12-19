@@ -840,7 +840,7 @@ const drawCanvas = async () => {
                   const y = y1 * 4 + y2 * 2 + y3
                   const thisTile = features.tileMap[`${x},${y}`]
                   if (thisTile.drawMe) {
-                    let shadowHeight = miniTileHeight * features.shadowHeightMod
+                    let shadowHeight = miniTileHeight * features.shadowHeightMod * (thisTile.tileSize / 4 * 1.5)
                     if (thisTile.level === 0) shadowHeight = 0
                     ctx.save()
                     ctx.translate(shadowHeight, shadowHeight)
