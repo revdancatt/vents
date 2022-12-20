@@ -81,6 +81,8 @@ const decideThings = (index) => {
 
   // Now put the tile in, with the draw and colour
   features.tileMap[index].drawMe = true
+  // If we are only drawing one or two tiles, then we need to turn all the tiles off
+  if (features.drawOnlyOne || features.drawOnlyTwo) features.tileMap[index].drawMe = false
   features.tileMap[index].ventType = 'none'
   features.tileMap[index].borderSize = 0.2
   features.tileMap[index].tileColour1 = tileColour1
@@ -182,20 +184,17 @@ const makeFeatures = () => {
 
   // If the layout mode is Pattern, then we need to work out what pattern we're going to use
   if (features.ventLayoutMode === 'Pattern') {
-    // There is a chance it's checkerboard
-    if (fxrand() < 0.999) {
-      features.pattern = 'Checkerboard'
-      // What type of checkerboard?
-      features.subPattern = 'Flip'
-      if (fxrand() < 0.75) {
-        features.subPattern = 'Inny'
-        if (fxrand() < 0.5) features.subPattern = 'Outy'
-      }
-      // Do we start on the first or second tile?
-      features.startOnZero = fxrand() < 0.5
-      // If it's checkerboard, then we want to make sure there's no divisions
-      features.firstDivisionChance = 0
+    features.pattern = 'Checkerboard'
+    // What type of checkerboard?
+    features.subPattern = 'Flip'
+    if (fxrand() < 0.75) {
+      features.subPattern = 'Inny'
+      if (fxrand() < 0.5) features.subPattern = 'Outy'
     }
+    // Do we start on the first or second tile?
+    features.startOnZero = fxrand() < 0.5
+    // If it's checkerboard, then we want to make sure there's no divisions
+    features.firstDivisionChance = 0
   }
 
   // There's a chance we mess around with the subdivisions
@@ -247,6 +246,29 @@ const makeFeatures = () => {
       features.innyChance = 0
       if (fxrand() < 0.5) features.innyChance = 1
     }
+  }
+
+  //  There is a chance we only draw one or two
+  features.drawOnlyOne = false
+  features.drawOnlyTwo = false
+  if (features.tiles > 1 && features.tiles < 6) {
+    if (fxrand() < 0.03) features.drawOnlyOne = true
+    if (features.tiles > 3) {
+      if (fxrand() < 0.8) {
+        features.drawOnlyOne = false
+        features.drawOnlyTwo = true
+      }
+    }
+  }
+
+  if (features.drawOnlyOne) {
+    features.levelLayoutMode = 'None'
+    features.levelLayoutChance = 0.0
+    features.ventLayoutMode = 'Random'
+    features.placementChance = 1
+    features.subdivisionPattern = 'None'
+    features.firstDivisionChance = 0
+    features.secondDivisionChance = 0
   }
 
   // Sometimes we show noise
@@ -390,11 +412,40 @@ const makeFeatures = () => {
 
   // Sometimes we just show the wireframe
   features.showWireframe = fxrand() < 0.16
-  features.showWireframe = true
 
   // And we want to store randomness to use for the wireframes
   features.wireframeRandomness = []
   for (let i = 0; i < 500000; i++) features.wireframeRandomness.push(fxrand() - 0.5)
+
+  // Sometimes we are only drawing one or two
+  if (features.drawOnlyOne || features.drawOnlyTwo) {
+    // Pick a random x from between 1 and one less than the number of tiles
+    const x1 = parseInt(fxrand() * (features.tiles - 2), 10) + 1
+    // Pick a random y from between 1 and one less than the number of tiles
+    const y1 = parseInt(fxrand() * (features.tiles - 2), 10) + 1
+    const index1 = `${x1 * 4},${y1 * 4}`
+    // Now make a second index that is different to the first
+    let index2 = index1
+    let escape = 0
+    while (index2 === index1 && escape < 100) {
+      const x2 = parseInt(fxrand() * (features.tiles - 2), 10) + 1
+      const y2 = parseInt(fxrand() * (features.tiles - 2), 10) + 1
+      index2 = `${x2 * 4},${y2 * 4}`
+      escape++
+    }
+
+    // Now make the first one drawMe true and level = 1
+    features.tileMap[index1].drawMe = true
+    features.tileMap[index1].level = 1
+    features.tileMap[index1].ventType = 'out'
+    if (fxrand() < features.innyChance) features.tileMap[index1].ventType = 'in'
+
+    if (features.drawOnlyTwo) {
+      // Now make the second one drawMe true and level = 1
+      features.tileMap[index2].drawMe = true
+      features.tileMap[index2].level = 1
+    }
+  }
 }
 
 //  Call the above make features, so we'll have the window.$fxhashFeatures available
@@ -610,9 +661,6 @@ const drawCanvas = async () => {
                         ctx.lineTo(corners.tr.x + (features.wireframeRandomness[wireframeRandomPointer + 4] * w / wMod), corners.tr.y + (features.wireframeRandomness[wireframeRandomPointer + 5] * w / wMod))
                         ctx.moveTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 10] * w / wMod) - shadowHeight, corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 11] * w / wMod) - shadowHeight)
                         ctx.lineTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 6] * w / wMod), corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 7] * w / wMod))
-                        // ctx.lineTo(corners.tr.x + (features.wireframeRandomness[wireframeRandomPointer + 8] * w / wMod), corners.tr.y + (features.wireframeRandomness[wireframeRandomPointer + 9] * w / wMod))
-                        // ctx.moveTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 10] * w / wMod), corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 11] * w / wMod))
-                        // ctx.lineTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 12] * w / wMod - shadowHeight), corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 13] * w / wMod) - shadowHeight)
                         wireframeRandomPointer += 14
                       }
                       ctx.stroke()
@@ -739,100 +787,8 @@ const drawCanvas = async () => {
       }
     }
   }
-  /*
-  for (let x = features.tiles * 4 - 1; x >= 0; x--) {
-    for (let y = features.tiles * 4 - 1; y >= 0; y--) {
-      const thisTile = features.tileMap[`${x},${y}`]
-      const thisTileIndex = x + y
-      if (thisTile.drawMe) {
-        let shadowHeight = miniTileHeight * features.shadowHeightMod
-        if (thisTile.level === 0) shadowHeight = 0
-        ctx.save()
-        ctx.translate(shadowHeight, shadowHeight)
 
-        // Work out the four corners of the tile
-        const corners = {
-          tl: {
-            x: x * miniTileWidth,
-            y: y * miniTileHeight
-          }
-        }
-        corners.tr = {
-          x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
-          y: corners.tl.y
-        }
-        corners.bl = {
-          x: corners.tl.x,
-          y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
-        }
-        corners.br = {
-          x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
-          y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
-        }
-
-        // We are going to create a gradient from the top left corner to the bottom left corner
-        // from tileColour1 to tileColour2
-        const gradient = ctx.createLinearGradient(corners.tl.x, corners.tl.y, corners.tl.x, corners.bl.y)
-        gradient.addColorStop(0, thisTile.tileColour1.value)
-        gradient.addColorStop(1, thisTile.tileColour2.value)
-        ctx.fillStyle = gradient
-
-        ctx.beginPath()
-        ctx.moveTo(corners.tl.x, corners.tl.y)
-        ctx.lineTo(corners.tr.x, corners.tr.y)
-        ctx.lineTo(corners.br.x, corners.br.y)
-        ctx.lineTo(corners.bl.x, corners.bl.y)
-        ctx.closePath()
-        ctx.fill()
-
-        // If we are level 1 then we need to add the top and side edges
-        if (thisTile.level === 1) {
-          // Work out the colours
-          const topColourHSL = rgbToHsl(hexToRgb(features.tileMap[`${x},${y}`].tileColour1.value))
-          const bottomColourHSL = rgbToHsl(hexToRgb(features.tileMap[`${x},${y}`].tileColour2.value))
-          //   Draw the top edge
-          ctx.fillStyle = `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.min(topColourHSL.l * 1.25, 90)}%)`
-          ctx.beginPath()
-          ctx.moveTo(corners.tl.x - shadowHeight, corners.tl.y - shadowHeight)
-          ctx.lineTo(corners.tr.x - shadowHeight, corners.tr.y - shadowHeight)
-          ctx.lineTo(corners.tr.x, corners.tr.y)
-          ctx.lineTo(corners.tl.x, corners.tl.y)
-          ctx.closePath()
-          ctx.fill()
-          //   Draw the left edge
-          ctx.save()
-          ctx.translate(corners.tl.x - shadowHeight, corners.tl.y - shadowHeight)
-          ctx.transform(1, 1, 0, 1, 0, 0)
-
-          const gradient = ctx.createLinearGradient(0, 0, 0, thisTile.tileSize * miniTileHeight)
-          gradient.addColorStop(0, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.min(topColourHSL.l * 1.15, 90)}%)`)
-          gradient.addColorStop(1, `hsl(${bottomColourHSL.h}, ${bottomColourHSL.s}%, ${Math.min(bottomColourHSL.l * 1.15, 90)}%)`)
-
-          ctx.fillStyle = gradient
-          ctx.strokeStyle = gradient
-          ctx.lineWidth = 1
-          ctx.beginPath()
-          ctx.moveTo(0, 0)
-          ctx.lineTo(shadowHeight, 0)
-          ctx.lineTo(shadowHeight, (thisTile.tileSize * miniTileHeight))
-          ctx.lineTo(0, (thisTile.tileSize * miniTileHeight))
-          ctx.closePath()
-          ctx.fill()
-          ctx.stroke()
-
-          ctx.restore()
-        }
-
-        ctx.restore()
-      }
-    }
-  }
-  */
   ctx.restore()
-  // drawTiles(0)
-  // drawHeightlghts(1)
-  // drawShadows(1)
-  // drawTiles(1)
 
   // If there's noise then we need to add it
   if (features.showNoise) {
@@ -849,6 +805,10 @@ const drawCanvas = async () => {
     thumbnailTaken = true
     fxpreview()
   }
+
+  await autoDownloadCanvas()
+  // reload the webpage
+  window.location.reload()
 }
 
 const autoDownloadCanvas = async (showHash = false) => {
