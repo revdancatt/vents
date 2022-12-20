@@ -86,7 +86,7 @@ const decideThings = (index) => {
   features.tileMap[index].tileColour1 = tileColour1
   features.tileMap[index].tileColour2 = tileColour2
 
-  if (features.layoutMode === 'Random') {
+  if (features.ventLayoutMode === 'Random') {
     // Now we need to figure out if we are going to put a vent in this tile
     if (fxrand() < features.placementChance) {
       // We are going to place a vent
@@ -100,12 +100,12 @@ const decideThings = (index) => {
     }
   }
   // If we're all in...
-  if (features.layoutMode === 'All In Everywhere All At Once') features.tileMap[index].ventType = 'in'
+  if (features.ventLayoutMode === 'All In Everywhere All At Once') features.tileMap[index].ventType = 'in'
   // If we're all out...
-  if (features.layoutMode === 'All Out Everywhere All At Once') features.tileMap[index].ventType = 'out'
+  if (features.ventLayoutMode === 'All Out Everywhere All At Once') features.tileMap[index].ventType = 'out'
 
   // If we're in a pattern then work out what to do
-  if (features.layoutMode === 'Pattern') {
+  if (features.ventLayoutMode === 'Pattern') {
     // if it's a checkerboard pattern, then we need to do that
     if (features.pattern === 'Checkerboard') {
       const x = parseInt(index.split(',')[0], 10) / 4
@@ -148,17 +148,40 @@ const makeFeatures = () => {
   // Pick a random number of tiles between 3 and 6
   features.tiles = Math.floor(fxrand() * 6) + 2
   features.scaleDown = features.tiles * 2 / (features.tiles * 2 + 1)
-  features.layoutMode = 'Random'
+  features.ventLayoutMode = 'Random'
+  features.levelLayoutMode = 'None'
+  features.levelLayoutChance = 0.0
+  features.levelInvert = false
+
   features.placementChance = 0
   features.innyChance = 0.5
   features.firstDivisionChance = 0.1
   features.secondDivisionChance = 0.1
-  features.shadowHeightMod = 0.5
+  features.subdivisionPattern = 'None'
+  features.shadowHeightMod = 0.4
 
-  if (fxrand() < 0.20) features.layoutMode = 'Pattern'
+  if (fxrand() < 0.20) features.ventLayoutMode = 'Pattern'
+  if (fxrand() < 0.8) {
+    features.levelLayoutMode = 'Random'
+    features.levelLayoutChance = 0.4
+    if (fxrand() < 0.2) features.levelLayoutChance = 0.1
+    if (fxrand() < 0.2) features.levelLayoutChance = 0.9
+    //  Now we may have a pattern
+    if (fxrand() < 0.4) {
+      features.levelLayoutMode = 'Checkerboard'
+      if (fxrand() < 0.5) features.levelInvert = true
+      if (fxrand() < 0.5) features.levelLayoutMode = 'Columns'
+      if (fxrand() < 0.33) features.levelLayoutMode = 'Rows'
+      if (fxrand() < 0.1) {
+        features.levelLayoutMode = 'Outside'
+        features.levelInvert = false
+        if (fxrand() < 0.1) features.levelInvert = true
+      }
+    }
+  }
 
   // If the layout mode is Pattern, then we need to work out what pattern we're going to use
-  if (features.layoutMode === 'Pattern') {
+  if (features.ventLayoutMode === 'Pattern') {
     // There is a chance it's checkerboard
     if (fxrand() < 0.999) {
       features.pattern = 'Checkerboard'
@@ -173,6 +196,11 @@ const makeFeatures = () => {
       // If it's checkerboard, then we want to make sure there's no divisions
       features.firstDivisionChance = 0
     }
+  }
+
+  // There's a chance we mess around with the subdivisions
+  if (fxrand() < 0.04) {
+    features.subdivisionPattern = 'Down'
   }
 
   // The vent has a size
@@ -193,7 +221,7 @@ const makeFeatures = () => {
       features.borderSize = 'Large'
     }
     // After all that, there's still a 10% chance we'll make it random
-    if (fxrand() < 0.1 && features.layoutMode !== 'Pattern') features.borderSize = 'Random'
+    if (fxrand() < 0.1 && features.ventLayoutMode !== 'Pattern') features.borderSize = 'Random'
   }
 
   // If we are random, there's a small chance we'll do something different
@@ -202,14 +230,14 @@ const makeFeatures = () => {
     if (fxrand() > 0.0) {
       // Either all in or all out
       if (fxrand() > 0.5) {
-        features.layoutMode = 'All In Everywhere All At Once'
+        features.ventLayoutMode = 'All In Everywhere All At Once'
       } else {
-        features.layoutMode = 'All Out Everywhere All At Once'
+        features.ventLayoutMode = 'All Out Everywhere All At Once'
       }
     }
   }
 
-  if (features.layoutMode === 'Random') {
+  if (features.ventLayoutMode === 'Random') {
     // Pick the chance of something being placed
     features.placementChance = fxrand() * 0.6 + 0.2
     // And now the chance it'll be an "inny" or an "outy"
@@ -221,17 +249,85 @@ const makeFeatures = () => {
     }
   }
 
+  // Sometimes we show noise
+  features.showNoise = fxrand() < 0.5
+  // We want 10,000 random points
+  features.noisePoints = []
+  for (let i = 0; i < 500000; i++) {
+    features.noisePoints.push({
+      x: fxrand(),
+      y: fxrand(),
+      shade: fxrand() < 0.5 ? 255 : 0
+    })
+  }
+
   // The final grid map will be 4x the number of tiles
   features.tileMap = {}
   // Grab a random palette
   features.palette = palettes[Math.floor(fxrand() * palettes.length)]
+  features.backgroundColour = '#ECE3D0'
+  features.backgroundColourName = 'Town Hall'
+  // Sometimes if there's more than three colours in the palette we'll remove one at random
+  // and use it as the background colour
+  if (features.palette.colors.length > 3 && fxrand() < 0.06666) {
+    const index = Math.floor(fxrand() * features.palette.colors.length)
+    features.backgroundColour = features.palette.colors[index].value
+    features.backgroundColourName = features.palette.colors[index].name
+    features.palette.colors.splice(index, 1)
+    features.showNoise = true
+  }
+
   // Loop through y and x for the number of tiles
   for (let y = 0; y < features.tiles; y++) {
     for (let x = 0; x < features.tiles; x++) {
       let level = 0
       const tileSize = 4
+      // let xPercent = 0
+      let yPercent = 0
+      if (features.subdivisionPattern === 'Down') {
+        yPercent = 1 - (y / (features.tiles - 1))
+      }
 
-      if (fxrand() < 0.25) level = 1
+      // If we have a special level layout mode, then we need to work out what level this tile is
+      if (features.levelLayoutMode !== 'None') {
+        // If it's random do it random
+        if (features.levelLayoutMode === 'Random') {
+          if (fxrand() < features.levelLayoutChance) level = 1
+        }
+        // If it's checkerboard, then we need to work out if it's in or out
+        if (features.levelLayoutMode === 'Checkerboard') {
+          let isChecked = false
+          if (parseInt(x, 10) % 2 === 0) isChecked = true
+          if (parseInt(y, 10) % 2 === 0) isChecked = !isChecked
+          if (features.levelInvert) isChecked = !isChecked
+          if (isChecked) level = 1
+        }
+
+        // If we are in columns then we need to do it when x is even
+        if (features.levelLayoutMode === 'Columns') {
+          let isChecked = false
+          if (parseInt(x, 10) % 2 === 0) isChecked = true
+          if (features.levelInvert) isChecked = !isChecked
+          if (isChecked) level = 1
+        }
+
+        // If we are in rows then we need to do it when y is even
+        if (features.levelLayoutMode === 'Rows') {
+          let isChecked = false
+          if (parseInt(y, 10) % 2 === 0) isChecked = true
+          if (features.levelInvert) isChecked = !isChecked
+          if (isChecked) level = 1
+        }
+
+        // If we are in outside then we need to do it when we are on the outer edge
+        if (features.levelLayoutMode === 'Outside') {
+          let isChecked = false
+          if (x === 0 || x === features.tiles - 1 || y === 0 || y === features.tiles - 1) isChecked = true
+          if (features.levelInvert) isChecked = !isChecked
+          if (isChecked) level = 1
+        }
+      }
+
       // We can do recursion, but it's a pain in the ass to debug, so we are going to do this
       // in a gnarly long way
       // Put the current level into the tileMap, to do this we loop from the x, y multiplied by the tileSize
@@ -246,7 +342,7 @@ const makeFeatures = () => {
       }
 
       // Decide if we are going to split this tile up, if not just make a good solid tile
-      if (fxrand() > features.firstDivisionChance) {
+      if (fxrand() > features.firstDivisionChance && fxrand() > yPercent) {
         // Don't split the tile
         const index = `${x * tileSize},${y * tileSize}`
         features.tileMap[index].tileSize = 4
@@ -256,13 +352,14 @@ const makeFeatures = () => {
         for (let stepy = 0; stepy <= 2; stepy += 2) {
           for (let stepx = 0; stepx <= 2; stepx += 2) {
             let nextLevel = level
-            if (nextLevel === 0) {
-              if (fxrand() < 0.25) {
+            // Only flip the level if we are in the random mode
+            if (nextLevel === 0 && features.levelLayoutMode === 'Random') {
+              if (fxrand() < features.levelLayoutChance) {
                 nextLevel = 1
               }
             }
             // But we may split it even more
-            if (fxrand() > features.secondDivisionChance) {
+            if (fxrand() > features.secondDivisionChance && fxrand() > yPercent) {
               const index = `${x * tileSize + stepx},${y * tileSize + stepy}`
               features.tileMap[index].tileSize = 2
               features.tileMap[index].level = nextLevel
@@ -270,8 +367,9 @@ const makeFeatures = () => {
             } else {
               // Split it even more
               let nextNextLevel = nextLevel
-              if (nextNextLevel === 0) {
-                if (fxrand() < 0.25) {
+              // Only flip the level if we are in the random mode
+              if (nextNextLevel === 0 && features.levelLayoutMode === 'Random') {
+                if (fxrand() < features.levelLayoutChance) {
                   nextNextLevel = 1
                 }
               }
@@ -295,18 +393,6 @@ const makeFeatures = () => {
   // And we want to store randomness to use for the wireframes
   features.wireframeRandomness = []
   for (let i = 0; i < 500000; i++) features.wireframeRandomness.push(fxrand() - 0.5)
-
-  // Sometimes we show noise
-  features.showNoise = fxrand() < 0.5
-  // We want 10,000 random points
-  features.noisePoints = []
-  for (let i = 0; i < 500000; i++) {
-    features.noisePoints.push({
-      x: fxrand(),
-      y: fxrand(),
-      shade: fxrand() < 0.5 ? 255 : 0
-    })
-  }
 }
 
 //  Call the above make features, so we'll have the window.$fxhashFeatures available
@@ -807,7 +893,7 @@ const drawCanvas = async () => {
   const w = canvas.width
   const h = canvas.height
 
-  ctx.fillStyle = '#ECE3D0'
+  ctx.fillStyle = features.backgroundColour
   ctx.fillRect(0, 0, w, h)
 
   ctx.lineWidth = w / (500 * features.tiles)
@@ -880,10 +966,8 @@ const drawCanvas = async () => {
                     ctx.closePath()
                     ctx.fill()
 
+                    // This draws the top and left edge if the tile is raised
                     if (thisTile.level === 1) {
-                      // Work out the colours
-                      const topColourHSL = rgbToHsl(hexToRgb(thisTile.tileColour1.value))
-                      const bottomColourHSL = rgbToHsl(hexToRgb(thisTile.tileColour2.value))
                       //   Draw the top edge
                       ctx.fillStyle = thisTile.tileColour1.value
                       ctx.beginPath()
@@ -921,6 +1005,118 @@ const drawCanvas = async () => {
 
                       ctx.restore()
                     }
+
+                    // Now work out the positions of the inner corners
+                    // First we need to define the border size as a percent, let's say 25%
+                    const innerCorners = {
+                      tl: {
+                        x: corners.tl.x + ((corners.tr.x - corners.tl.x) * thisTile.borderSize),
+                        y: corners.tl.y + ((corners.bl.y - corners.tl.y) * thisTile.borderSize)
+                      },
+                      tr: {
+                        x: corners.tr.x - ((corners.tr.x - corners.tl.x) * thisTile.borderSize),
+                        y: corners.tr.y + ((corners.br.y - corners.tr.y) * thisTile.borderSize)
+                      },
+                      bl: {
+                        x: corners.bl.x + ((corners.br.x - corners.bl.x) * thisTile.borderSize),
+                        y: corners.bl.y - ((corners.bl.y - corners.tl.y) * thisTile.borderSize)
+                      },
+                      br: {
+                        x: corners.br.x - ((corners.br.x - corners.bl.x) * thisTile.borderSize),
+                        y: corners.br.y - ((corners.br.y - corners.tr.y) * thisTile.borderSize)
+                      }
+                    }
+
+                    // Now we want the shadow, we need to set how wide that will be, as a percentage of the tile
+                    const shadowWidth = 0.1
+                    const shadownDownSize = (innerCorners.bl.y - innerCorners.tl.y) * shadowWidth
+                    const shadowAcrossSize = (innerCorners.tr.x - innerCorners.tl.x) * shadowWidth * 2
+                    let innerGradient = null
+                    let innerGradientDark = null
+                    let topColourHSL = null
+                    if (thisTile.ventType === 'in' || thisTile.ventType === 'out') {
+                      innerGradient = ctx.createLinearGradient(innerCorners.tl.x, innerCorners.tl.y, innerCorners.tl.x, innerCorners.bl.y)
+                      innerGradientDark = ctx.createLinearGradient(innerCorners.tl.x, innerCorners.tl.y, innerCorners.tl.x, innerCorners.bl.y)
+                      topColourHSL = rgbToHsl(hexToRgb(features.tileMap[`${x},${y}`].tileColour1.value))
+                      // if the vent is going in, we want to make the top darker
+                      if (thisTile.ventType === 'in') {
+                        innerGradient.addColorStop(0, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.max(topColourHSL.l * 0.25, 10)}%)`)
+                        innerGradient.addColorStop(1, features.tileMap[`${x},${y}`].tileColour1.value)
+                        innerGradientDark.addColorStop(0, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.max(topColourHSL.l * 0.25, 10)}%)`)
+                        innerGradientDark.addColorStop(1, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.max(topColourHSL.l * 0.75, 10)}%)`)
+                      }
+                      // if the vent is going out, we want to make the bottom lighter
+                      if (thisTile.ventType === 'out') {
+                        innerGradient.addColorStop(0, features.tileMap[`${x},${y}`].tileColour1.value)
+                        innerGradient.addColorStop(1, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.min(topColourHSL.l * 1.75, 90)}%)`)
+                        innerGradientDark.addColorStop(0, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.max(topColourHSL.l * 0.5, 10)}%)`)
+                        innerGradientDark.addColorStop(1, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.max(topColourHSL.l * 0.75, 10)}%)`)
+                      }
+                    }
+                    ctx.fillStyle = innerGradient
+                    ctx.strokeStyle = innerGradientDark
+
+                    // If the vent is going in, then we need to draw the inner tile and then the shadow
+                    if (thisTile.ventType === 'in') {
+                      ctx.beginPath()
+                      ctx.moveTo(innerCorners.tl.x, innerCorners.tl.y)
+                      ctx.lineTo(innerCorners.tr.x, innerCorners.tr.y)
+                      ctx.lineTo(innerCorners.br.x, innerCorners.br.y)
+                      ctx.lineTo(innerCorners.bl.x, innerCorners.bl.y)
+                      ctx.closePath()
+                      ctx.fill()
+
+                      // Draw the shadow down first
+                      ctx.fillStyle = 'rgba(0,0,0,0.66)'
+                      ctx.beginPath()
+                      ctx.moveTo(innerCorners.tl.x, innerCorners.tl.y)
+                      ctx.lineTo(innerCorners.tr.x, innerCorners.tr.y)
+                      ctx.lineTo(innerCorners.tr.x - shadowAcrossSize, innerCorners.tr.y + shadownDownSize)
+                      ctx.lineTo(innerCorners.tl.x, innerCorners.tl.y + shadownDownSize)
+                      ctx.closePath()
+                      ctx.fill()
+
+                      // Draw the side shadow
+                      ctx.fillStyle = 'rgba(0,0,0,0.33)'
+                      ctx.beginPath()
+                      ctx.moveTo(innerCorners.tr.x, innerCorners.tr.y)
+                      ctx.lineTo(innerCorners.br.x, innerCorners.br.y)
+                      ctx.lineTo(innerCorners.tr.x - shadowAcrossSize, innerCorners.tr.y + shadownDownSize)
+                      ctx.closePath()
+                      ctx.fill()
+                    }
+
+                    // If the vent is going out, we need to draw it slightly differently
+                    if (thisTile.ventType === 'out') {
+                      ctx.beginPath()
+                      ctx.moveTo(innerCorners.tl.x, innerCorners.tl.y)
+                      ctx.lineTo(innerCorners.tr.x, innerCorners.tr.y)
+                      ctx.lineTo(innerCorners.br.x + shadowAcrossSize, innerCorners.br.y)
+                      ctx.lineTo(innerCorners.bl.x + shadowAcrossSize, innerCorners.bl.y)
+                      ctx.closePath()
+                      ctx.fill()
+
+                      // Draw the shadow down first
+                      ctx.fillStyle = 'rgba(0,0,0,0.8)'
+                      ctx.beginPath()
+                      ctx.moveTo(innerCorners.bl.x + shadowAcrossSize, innerCorners.bl.y)
+                      ctx.lineTo(innerCorners.br.x + shadowAcrossSize, innerCorners.br.y)
+                      ctx.lineTo(innerCorners.br.x, innerCorners.br.y + shadownDownSize)
+                      ctx.lineTo(innerCorners.bl.x, innerCorners.bl.y + shadownDownSize)
+                      ctx.closePath()
+                      ctx.fill()
+
+                      // Draw the side shadow
+                      ctx.fillStyle = 'rgba(0,0,0,0.33)'
+                      ctx.beginPath()
+                      ctx.moveTo(innerCorners.tl.x, innerCorners.tl.y)
+                      ctx.lineTo(innerCorners.bl.x + shadowAcrossSize, innerCorners.bl.y)
+                      ctx.lineTo(innerCorners.bl.x, innerCorners.bl.y + shadownDownSize)
+                      ctx.closePath()
+                      ctx.fill()
+                    }
+
+                    //   This is putting the position of the canvas back to how it was before
                     ctx.restore()
                   }
                 }
