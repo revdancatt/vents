@@ -390,6 +390,8 @@ const makeFeatures = () => {
 
   // Sometimes we just show the wireframe
   features.showWireframe = fxrand() < 0.16
+  features.showWireframe = true
+
   // And we want to store randomness to use for the wireframes
   features.wireframeRandomness = []
   for (let i = 0; i < 500000; i++) features.wireframeRandomness.push(fxrand() - 0.5)
@@ -461,427 +463,6 @@ const layoutCanvas = async () => {
 
   //  And draw it!!
   drawCanvas()
-}
-
-const drawHeightlghts = (level) => {
-  // Grab all the canvas stuff
-  const canvas = document.getElementById('target')
-  const ctx = canvas.getContext('2d')
-  const w = canvas.width
-  const h = canvas.height
-
-  ctx.lineWidth = w / (500 * features.tiles)
-
-  // const maxMiniTiles = features.tiles * 4
-  const miniTileWidth = w / (features.tiles * 4)
-  const miniTileHeight = h / (features.tiles * 4)
-  const shadowHeight = miniTileHeight * features.shadowHeightMod
-
-  ctx.save()
-  ctx.scale(features.scaleDown, features.scaleDown)
-  ctx.translate(w / features.tiles / 4, h / features.tiles / 4)
-  // Now we need to loop through the tileMap and draw the tiles
-  const size = [4, 2, 1]
-  // Loop through the size array
-  for (let i = 0; i <= size.length - 1; i++) {
-    const thisSize = size[i]
-    for (let y = features.tiles * 4 - 1; y >= 0; y--) {
-      for (let x = features.tiles * 4 - 1; x >= 0; x--) {
-        const thisTile = features.tileMap[`${x},${y}`]
-        if (thisTile.drawMe && thisTile.level === level && thisTile.tileSize === thisSize) {
-          // Work out the four corners of the tile
-          const corners = {
-            tl: {
-              x: x * miniTileWidth,
-              y: y * miniTileHeight
-            }
-          }
-          corners.tr = {
-            x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
-            y: corners.tl.y
-          }
-          corners.bl = {
-            x: corners.tl.x,
-            y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
-          }
-          corners.br = {
-            x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
-            y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
-          }
-
-          // if we have a shadowHeight then we need to draw a top ledge
-          const topColourHSL = rgbToHsl(hexToRgb(features.tileMap[`${x},${y}`].tileColour1.value))
-          const bottomColourHSL = rgbToHsl(hexToRgb(features.tileMap[`${x},${y}`].tileColour2.value))
-          ctx.fillStyle = `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.min(topColourHSL.l * 1.25, 90)}%)`
-          ctx.beginPath()
-          ctx.moveTo(corners.tl.x, corners.tl.y)
-          ctx.lineTo(corners.tr.x, corners.tr.y)
-          ctx.lineTo(corners.tr.x + shadowHeight, corners.tr.y + shadowHeight)
-          ctx.lineTo(corners.tl.x + shadowHeight, corners.tl.y + shadowHeight)
-          ctx.closePath()
-          ctx.fill()
-
-          // Now we want to draw a red square in the top left corner which we do by translating
-          // to the top left
-          ctx.save()
-          ctx.translate(corners.tl.x, corners.tl.y)
-          ctx.transform(1, 1, 0, 1, 0, 0)
-          const gradient = ctx.createLinearGradient(0, 0, 0, thisTile.tileSize * miniTileHeight)
-          gradient.addColorStop(0, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.min(topColourHSL.l * 1.15, 90)}%)`)
-          gradient.addColorStop(1, `hsl(${bottomColourHSL.h}, ${bottomColourHSL.s}%, ${Math.min(bottomColourHSL.l * 1.15, 90)}%)`)
-
-          ctx.fillStyle = gradient
-          ctx.strokeStyle = gradient
-          ctx.lineWidth = 1
-          ctx.beginPath()
-          ctx.moveTo(0, 0)
-          ctx.lineTo(shadowHeight, 0)
-          ctx.lineTo(shadowHeight, (thisTile.tileSize * miniTileHeight))
-          ctx.lineTo(0, (thisTile.tileSize * miniTileHeight))
-          ctx.closePath()
-          ctx.fill()
-          ctx.stroke()
-          ctx.restore()
-        }
-      }
-    }
-  }
-
-  ctx.restore()
-}
-
-const drawShadows = (level) => {
-  // Grab all the canvas stuff
-  const canvas = document.getElementById('target')
-  const ctx = canvas.getContext('2d')
-  const w = canvas.width
-  const h = canvas.height
-
-  ctx.lineWidth = w / (500 * features.tiles)
-
-  // const maxMiniTiles = features.tiles * 4
-  const miniTileWidth = w / (features.tiles * 4)
-  const miniTileHeight = h / (features.tiles * 4)
-  const shadowHeight = miniTileHeight * features.shadowHeightMod
-
-  ctx.save()
-  ctx.scale(features.scaleDown, features.scaleDown)
-  ctx.translate(w / features.tiles / 4, h / features.tiles / 4)
-  // Now we need to loop through the tileMap and draw the tiles
-  for (let y = features.tiles * 4 - 1; y >= 0; y--) {
-    for (let x = features.tiles * 4 - 1; x >= 0; x--) {
-      const thisTile = features.tileMap[`${x},${y}`]
-      if (thisTile.drawMe && thisTile.level === level) {
-        // Work out the four corners of the tile
-        const corners = {
-          tl: {
-            x: x * miniTileWidth,
-            y: y * miniTileHeight
-          }
-        }
-        corners.tr = {
-          x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
-          y: corners.tl.y
-        }
-        corners.bl = {
-          x: corners.tl.x,
-          y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
-        }
-        corners.br = {
-          x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
-          y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
-        }
-
-        ctx.save()
-        ctx.beginPath()
-        ctx.moveTo(corners.tl.x + shadowHeight, corners.tl.y + shadowHeight)
-        ctx.lineTo(corners.tr.x + shadowHeight, corners.tr.y + shadowHeight)
-        ctx.lineTo(corners.br.x + shadowHeight, corners.br.y + shadowHeight)
-        ctx.lineTo(corners.bl.x + shadowHeight, corners.bl.y + shadowHeight)
-        ctx.closePath()
-        ctx.clip()
-
-        ctx.strokeStyle = 'rgba(0,0,0,0.1)'
-
-        ctx.beginPath()
-        ctx.moveTo(corners.tr.x + shadowHeight, corners.tr.y + shadowHeight)
-        ctx.lineTo(corners.br.x + shadowHeight, corners.br.y + shadowHeight)
-        ctx.lineTo(corners.bl.x + shadowHeight, corners.bl.y + shadowHeight)
-        ctx.lineWidth = w / 400
-        // ctx.stroke()
-        ctx.lineWidth = w / 800
-        ctx.stroke()
-
-        ctx.strokeStyle = 'rgba(255,255,255,0.2)'
-        ctx.beginPath()
-        ctx.moveTo(corners.bl.x + shadowHeight, corners.bl.y + shadowHeight)
-        ctx.lineTo(corners.tl.x + shadowHeight, corners.tl.y + shadowHeight)
-        ctx.lineTo(corners.tr.x + shadowHeight, corners.tr.y + shadowHeight)
-        // ctx.stroke()
-
-        ctx.restore()
-      }
-    }
-  }
-
-  ctx.restore()
-}
-
-const drawTiles = (level) => {
-  // Grab all the canvas stuff
-  const canvas = document.getElementById('target')
-  const ctx = canvas.getContext('2d')
-  const w = canvas.width
-  const h = canvas.height
-
-  ctx.lineWidth = w / (500 * features.tiles)
-
-  // const maxMiniTiles = features.tiles * 4
-  const miniTileWidth = w / (features.tiles * 4)
-  const miniTileHeight = h / (features.tiles * 4)
-  let shadowHeight = miniTileHeight * features.shadowHeightMod
-  if (level === 0) shadowHeight = 0
-
-  ctx.save()
-  ctx.scale(features.scaleDown, features.scaleDown)
-  ctx.translate(w / features.tiles / 4 + shadowHeight, h / features.tiles / 4 + shadowHeight)
-  let wireframeRandomPointer = 0
-  const wireframeLoop = 5
-  const wMod = features.tiles * 40
-  // Now we need to loop through the tileMap and draw the tiles
-  for (let y = features.tiles * 4 - 1; y >= 0; y--) {
-    for (let x = features.tiles * 4 - 1; x >= 0; x--) {
-      const thisTile = features.tileMap[`${x},${y}`]
-      if (thisTile.drawMe && thisTile.level === level) {
-        // Work out the four corners of the tile
-        const corners = {
-          tl: {
-            x: x * miniTileWidth,
-            y: y * miniTileHeight
-          }
-        }
-        corners.tr = {
-          x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
-          y: corners.tl.y
-        }
-        corners.bl = {
-          x: corners.tl.x,
-          y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
-        }
-        corners.br = {
-          x: corners.tl.x + (thisTile.tileSize * miniTileWidth),
-          y: corners.tl.y + (thisTile.tileSize * miniTileHeight)
-        }
-
-        // Now work out the positions of the inner corners
-        // First we need to define the border size as a percent, let's say 25%
-        const innerCorners = {
-          tl: {
-            x: corners.tl.x + ((corners.tr.x - corners.tl.x) * thisTile.borderSize),
-            y: corners.tl.y + ((corners.bl.y - corners.tl.y) * thisTile.borderSize)
-          },
-          tr: {
-            x: corners.tr.x - ((corners.tr.x - corners.tl.x) * thisTile.borderSize),
-            y: corners.tr.y + ((corners.br.y - corners.tr.y) * thisTile.borderSize)
-          },
-          bl: {
-            x: corners.bl.x + ((corners.br.x - corners.bl.x) * thisTile.borderSize),
-            y: corners.bl.y - ((corners.bl.y - corners.tl.y) * thisTile.borderSize)
-          },
-          br: {
-            x: corners.br.x - ((corners.br.x - corners.bl.x) * thisTile.borderSize),
-            y: corners.br.y - ((corners.br.y - corners.tr.y) * thisTile.borderSize)
-          }
-        }
-
-        // Now we want the shadow, we need to set how wide that will be, as a percentage of the tile
-        const shadowWidth = 0.1
-        const shadownDownSize = (innerCorners.bl.y - innerCorners.tl.y) * shadowWidth
-        const shadowAcrossSize = (innerCorners.tr.x - innerCorners.tl.x) * shadowWidth * 2
-
-        // We are going to create a gradient from the top left corner to the bottom left corner
-        // from tileColour1 to tileColour2
-        const gradient = ctx.createLinearGradient(corners.tl.x, corners.tl.y, corners.tl.x, corners.bl.y)
-        gradient.addColorStop(0, thisTile.tileColour1.value)
-        gradient.addColorStop(1, thisTile.tileColour2.value)
-        ctx.fillStyle = gradient
-        ctx.strokeStyle = gradient
-        if (features.showWireframe) {
-          ctx.beginPath()
-          for (let i = 0; i < wireframeLoop; i++) {
-            ctx.moveTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
-            ctx.lineTo(corners.tr.x + (features.wireframeRandomness[wireframeRandomPointer + 2] * w / wMod), corners.tr.y + (features.wireframeRandomness[wireframeRandomPointer + 3] * w / wMod))
-            ctx.lineTo(corners.br.x + (features.wireframeRandomness[wireframeRandomPointer + 4] * w / wMod), corners.br.y + (features.wireframeRandomness[wireframeRandomPointer + 5] * w / wMod))
-            ctx.lineTo(corners.bl.x + (features.wireframeRandomness[wireframeRandomPointer + 6] * w / wMod), corners.bl.y + (features.wireframeRandomness[wireframeRandomPointer + 7] * w / wMod))
-            ctx.lineTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
-            wireframeRandomPointer += 8
-          }
-          ctx.stroke()
-        } else {
-          ctx.beginPath()
-          ctx.moveTo(corners.tl.x, corners.tl.y)
-          ctx.lineTo(corners.tr.x, corners.tr.y)
-          ctx.lineTo(corners.br.x, corners.br.y)
-          ctx.lineTo(corners.bl.x, corners.bl.y)
-          ctx.closePath()
-          ctx.fill()
-        }
-
-        // If the vent is going in or out, we need to set the gradient to be reversed
-        let innerGradient = null
-        let innerGradientDark = null
-        let topColourHSL = null
-        if (thisTile.ventType === 'in' || thisTile.ventType === 'out') {
-          innerGradient = ctx.createLinearGradient(innerCorners.tl.x, innerCorners.tl.y, innerCorners.tl.x, innerCorners.bl.y)
-          innerGradientDark = ctx.createLinearGradient(innerCorners.tl.x, innerCorners.tl.y, innerCorners.tl.x, innerCorners.bl.y)
-          topColourHSL = rgbToHsl(hexToRgb(features.tileMap[`${x},${y}`].tileColour1.value))
-          // if the vent is going in, we want to make the top darker
-          if (thisTile.ventType === 'in') {
-            innerGradient.addColorStop(0, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.max(topColourHSL.l * 0.25, 10)}%)`)
-            innerGradient.addColorStop(1, features.tileMap[`${x},${y}`].tileColour1.value)
-            innerGradientDark.addColorStop(0, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.max(topColourHSL.l * 0.25, 10)}%)`)
-            innerGradientDark.addColorStop(1, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.max(topColourHSL.l * 0.75, 10)}%)`)
-          }
-          // if the vent is going out, we want to make the bottom lighter
-          if (thisTile.ventType === 'out') {
-            innerGradient.addColorStop(0, features.tileMap[`${x},${y}`].tileColour1.value)
-            innerGradient.addColorStop(1, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.min(topColourHSL.l * 1.75, 90)}%)`)
-            innerGradientDark.addColorStop(0, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.max(topColourHSL.l * 0.5, 10)}%)`)
-            innerGradientDark.addColorStop(1, `hsl(${topColourHSL.h}, ${topColourHSL.s}%, ${Math.max(topColourHSL.l * 0.75, 10)}%)`)
-          }
-        }
-        ctx.fillStyle = innerGradient
-        ctx.strokeStyle = innerGradientDark
-
-        // Now draw the inner tile
-        // If the vent is going in, then we need to draw the inner tile and then the shadow
-        if (thisTile.ventType === 'in') {
-          if (features.showWireframe) {
-            ctx.beginPath()
-            for (let i = 0; i < wireframeLoop; i++) {
-              ctx.moveTo(innerCorners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), innerCorners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
-              ctx.lineTo(innerCorners.tr.x + (features.wireframeRandomness[wireframeRandomPointer + 2] * w / wMod), innerCorners.tr.y + (features.wireframeRandomness[wireframeRandomPointer + 3] * w / wMod))
-              ctx.lineTo(innerCorners.br.x + (features.wireframeRandomness[wireframeRandomPointer + 4] * w / wMod), innerCorners.br.y + (features.wireframeRandomness[wireframeRandomPointer + 5] * w / wMod))
-              ctx.lineTo(innerCorners.bl.x + (features.wireframeRandomness[wireframeRandomPointer + 6] * w / wMod), innerCorners.bl.y + (features.wireframeRandomness[wireframeRandomPointer + 7] * w / wMod))
-              ctx.lineTo(innerCorners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), innerCorners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
-              wireframeRandomPointer += 8
-            }
-            ctx.stroke()
-
-            // Top shadow
-            ctx.beginPath()
-            for (let i = 0; i < wireframeLoop; i++) {
-              ctx.moveTo(innerCorners.tr.x + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), innerCorners.tr.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
-              ctx.lineTo(innerCorners.tr.x - shadowAcrossSize + (features.wireframeRandomness[wireframeRandomPointer + 2] * w / wMod), innerCorners.tr.y + shadownDownSize + (features.wireframeRandomness[wireframeRandomPointer + 3] * w / wMod))
-              ctx.lineTo(innerCorners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 4] * w / wMod), innerCorners.tl.y + shadownDownSize + (features.wireframeRandomness[wireframeRandomPointer + 5] * w / wMod))
-              wireframeRandomPointer += 6
-            }
-            ctx.stroke()
-
-            // Side shadow
-            ctx.lineStyle = 'rgba(0,0,0,0.66)'
-            ctx.beginPath()
-            for (let i = 0; i < wireframeLoop; i++) {
-              ctx.moveTo(innerCorners.tr.x - shadowAcrossSize + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), innerCorners.tr.y + shadownDownSize + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
-              ctx.lineTo(innerCorners.br.x + (features.wireframeRandomness[wireframeRandomPointer + 2] * w / wMod), innerCorners.br.y + (features.wireframeRandomness[wireframeRandomPointer + 3] * w / wMod))
-              wireframeRandomPointer += 4
-            }
-            ctx.stroke()
-          } else {
-            ctx.beginPath()
-            ctx.moveTo(innerCorners.tl.x, innerCorners.tl.y)
-            ctx.lineTo(innerCorners.tr.x, innerCorners.tr.y)
-            ctx.lineTo(innerCorners.br.x, innerCorners.br.y)
-            ctx.lineTo(innerCorners.bl.x, innerCorners.bl.y)
-            ctx.closePath()
-            ctx.fill()
-
-            // Draw the shadow down first
-            ctx.fillStyle = 'rgba(0,0,0,0.66)'
-            ctx.beginPath()
-            ctx.moveTo(innerCorners.tl.x, innerCorners.tl.y)
-            ctx.lineTo(innerCorners.tr.x, innerCorners.tr.y)
-            ctx.lineTo(innerCorners.tr.x - shadowAcrossSize, innerCorners.tr.y + shadownDownSize)
-            ctx.lineTo(innerCorners.tl.x, innerCorners.tl.y + shadownDownSize)
-            ctx.closePath()
-            ctx.fill()
-
-            // Draw the side shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.33)'
-            ctx.beginPath()
-            ctx.moveTo(innerCorners.tr.x, innerCorners.tr.y)
-            ctx.lineTo(innerCorners.br.x, innerCorners.br.y)
-            ctx.lineTo(innerCorners.tr.x - shadowAcrossSize, innerCorners.tr.y + shadownDownSize)
-            ctx.closePath()
-            ctx.fill()
-          }
-        }
-
-        // If the vent is going out, we need to draw it slightly differently
-        if (thisTile.ventType === 'out') {
-          if (features.showWireframe) {
-            ctx.beginPath()
-            for (let i = 0; i < wireframeLoop; i++) {
-              ctx.moveTo(innerCorners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), innerCorners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
-              ctx.lineTo(innerCorners.tr.x + (features.wireframeRandomness[wireframeRandomPointer + 2] * w / wMod), innerCorners.tr.y + (features.wireframeRandomness[wireframeRandomPointer + 3] * w / wMod))
-              ctx.lineTo(innerCorners.br.x + shadowAcrossSize + (features.wireframeRandomness[wireframeRandomPointer + 4] * w / wMod), innerCorners.br.y + (features.wireframeRandomness[wireframeRandomPointer + 5] * w / wMod))
-              ctx.lineTo(innerCorners.bl.x + shadowAcrossSize + (features.wireframeRandomness[wireframeRandomPointer + 6] * w / wMod), innerCorners.bl.y + (features.wireframeRandomness[wireframeRandomPointer + 7] * w / wMod))
-              ctx.lineTo(innerCorners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), innerCorners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
-              wireframeRandomPointer += 8
-            }
-            ctx.stroke()
-
-            ctx.beginPath()
-            for (let i = 0; i < wireframeLoop; i++) {
-              ctx.moveTo(innerCorners.br.x + shadowAcrossSize + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), innerCorners.br.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
-              ctx.lineTo(innerCorners.br.x + (features.wireframeRandomness[wireframeRandomPointer + 2] * w / wMod), innerCorners.br.y + shadownDownSize + (features.wireframeRandomness[wireframeRandomPointer + 3] * w / wMod))
-              ctx.lineTo(innerCorners.bl.x + (features.wireframeRandomness[wireframeRandomPointer + 4] * w / wMod), innerCorners.bl.y + shadownDownSize + (features.wireframeRandomness[wireframeRandomPointer + 5] * w / wMod))
-              ctx.lineTo(innerCorners.bl.x + shadowAcrossSize + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), innerCorners.bl.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
-              wireframeRandomPointer += 6
-            }
-            ctx.stroke()
-
-            ctx.beginPath()
-            for (let i = 0; i < wireframeLoop; i++) {
-              ctx.moveTo(innerCorners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), innerCorners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
-              ctx.lineTo(innerCorners.bl.x + (features.wireframeRandomness[wireframeRandomPointer + 2] * w / wMod), innerCorners.bl.y + shadownDownSize + (features.wireframeRandomness[wireframeRandomPointer + 3] * w / wMod))
-              wireframeRandomPointer += 4
-            }
-            ctx.stroke()
-          } else {
-            ctx.beginPath()
-            ctx.moveTo(innerCorners.tl.x, innerCorners.tl.y)
-            ctx.lineTo(innerCorners.tr.x, innerCorners.tr.y)
-            ctx.lineTo(innerCorners.br.x + shadowAcrossSize, innerCorners.br.y)
-            ctx.lineTo(innerCorners.bl.x + shadowAcrossSize, innerCorners.bl.y)
-            ctx.closePath()
-            ctx.fill()
-
-            // Draw the shadow down first
-            ctx.fillStyle = 'rgba(0,0,0,0.8)'
-            ctx.beginPath()
-            ctx.moveTo(innerCorners.bl.x + shadowAcrossSize, innerCorners.bl.y)
-            ctx.lineTo(innerCorners.br.x + shadowAcrossSize, innerCorners.br.y)
-            ctx.lineTo(innerCorners.br.x, innerCorners.br.y + shadownDownSize)
-            ctx.lineTo(innerCorners.bl.x, innerCorners.bl.y + shadownDownSize)
-            ctx.closePath()
-            ctx.fill()
-
-            // Draw the side shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.33)'
-            ctx.beginPath()
-            ctx.moveTo(innerCorners.tl.x, innerCorners.tl.y)
-            ctx.lineTo(innerCorners.bl.x + shadowAcrossSize, innerCorners.bl.y)
-            ctx.lineTo(innerCorners.bl.x, innerCorners.bl.y + shadownDownSize)
-            ctx.closePath()
-            ctx.fill()
-          }
-        }
-      }
-    }
-  }
-
-  ctx.restore()
 }
 
 const drawCanvas = async () => {
@@ -965,26 +546,7 @@ const drawCanvas = async () => {
                     ctx.lineTo(corners.br.x, corners.br.y)
                     ctx.lineTo(corners.bl.x, corners.bl.y)
                     ctx.closePath()
-                    //  If we are in wireframe mode, draw the wireframe
-                    if (features.showWireframe) {
-                      //  Fill in the tile with normal background colour
-                      ctx.fillStyle = features.backgroundColour
-                      ctx.fill()
-                      //   Now draw the wireframe outlines
-                      ctx.beginPath()
-                      for (let i = 0; i < wireframeLoop; i++) {
-                        ctx.moveTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
-                        ctx.lineTo(corners.tr.x + (features.wireframeRandomness[wireframeRandomPointer + 2] * w / wMod), corners.tr.y + (features.wireframeRandomness[wireframeRandomPointer + 3] * w / wMod))
-                        ctx.lineTo(corners.br.x + (features.wireframeRandomness[wireframeRandomPointer + 4] * w / wMod), corners.br.y + (features.wireframeRandomness[wireframeRandomPointer + 5] * w / wMod))
-                        ctx.lineTo(corners.bl.x + (features.wireframeRandomness[wireframeRandomPointer + 6] * w / wMod), corners.bl.y + (features.wireframeRandomness[wireframeRandomPointer + 7] * w / wMod))
-                        ctx.lineTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
-                        wireframeRandomPointer += 8
-                      }
-                      ctx.stroke()
-                    } else {
-                      // Just fill in the tile
-                      ctx.fill()
-                    }
+                    ctx.fill()
 
                     // This draws the top and left edge if the tile is raised
                     if (thisTile.level === 1) {
@@ -1024,22 +586,36 @@ const drawCanvas = async () => {
                       ctx.fill()
 
                       ctx.restore()
+                    }
 
-                      // If we are in wireframe mode, draw the wireframe edges
-                      if (features.showWireframe) {
-                        ctx.beginPath()
-                        for (let i = 0; i < wireframeLoop; i++) {
-                          ctx.moveTo(corners.bl.x + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), corners.bl.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
-                          ctx.lineTo(corners.bl.x + (features.wireframeRandomness[wireframeRandomPointer + 2] * w / wMod - shadowHeight), corners.bl.y + (features.wireframeRandomness[wireframeRandomPointer + 3] * w / wMod) - shadowHeight)
-                          ctx.lineTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 4] * w / wMod - shadowHeight), corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 5] * w / wMod) - shadowHeight)
-                          ctx.lineTo(corners.tr.x + (features.wireframeRandomness[wireframeRandomPointer + 6] * w / wMod - shadowHeight), corners.tr.y + (features.wireframeRandomness[wireframeRandomPointer + 7] * w / wMod) - shadowHeight)
-                          ctx.lineTo(corners.tr.x + (features.wireframeRandomness[wireframeRandomPointer + 8] * w / wMod), corners.tr.y + (features.wireframeRandomness[wireframeRandomPointer + 9] * w / wMod))
-                          ctx.moveTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 10] * w / wMod), corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 11] * w / wMod))
-                          ctx.lineTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 12] * w / wMod - shadowHeight), corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 13] * w / wMod) - shadowHeight)
-                          wireframeRandomPointer += 14
-                        }
-                        ctx.stroke()
+                    //  If we are in wireframe mode, draw the wireframe
+                    if (features.showWireframe) {
+                      //  Fill in the tile with normal background colour
+                      ctx.fillStyle = features.backgroundColour
+                      ctx.moveTo(corners.tl.x, corners.tl.y)
+                      ctx.lineTo(corners.tr.x, corners.tr.y)
+                      ctx.lineTo(corners.br.x, corners.br.y)
+                      ctx.lineTo(corners.bl.x, corners.bl.y)
+                      ctx.fill()
+                      ctx.beginPath()
+                      for (let i = 0; i < wireframeLoop; i++) {
+                        ctx.moveTo(corners.bl.x + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), corners.bl.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
+                        ctx.lineTo(corners.br.x + (features.wireframeRandomness[wireframeRandomPointer + 2] * w / wMod), corners.br.y + (features.wireframeRandomness[wireframeRandomPointer + 3] * w / wMod))
+                        ctx.lineTo(corners.tr.x + (features.wireframeRandomness[wireframeRandomPointer + 4] * w / wMod), corners.tr.y + (features.wireframeRandomness[wireframeRandomPointer + 5] * w / wMod))
+                        ctx.lineTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 6] * w / wMod), corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 7] * w / wMod))
+                        ctx.lineTo(corners.bl.x + (features.wireframeRandomness[wireframeRandomPointer + 0] * w / wMod), corners.bl.y + (features.wireframeRandomness[wireframeRandomPointer + 1] * w / wMod))
+                        ctx.lineTo(corners.bl.x + (features.wireframeRandomness[wireframeRandomPointer + 8] * w / wMod) - shadowHeight, corners.bl.y + (features.wireframeRandomness[wireframeRandomPointer + 9] * w / wMod) - shadowHeight)
+                        ctx.lineTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 10] * w / wMod) - shadowHeight, corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 11] * w / wMod) - shadowHeight)
+                        ctx.lineTo(corners.tr.x + (features.wireframeRandomness[wireframeRandomPointer + 12] * w / wMod) - shadowHeight, corners.tr.y + (features.wireframeRandomness[wireframeRandomPointer + 13] * w / wMod) - shadowHeight)
+                        ctx.lineTo(corners.tr.x + (features.wireframeRandomness[wireframeRandomPointer + 4] * w / wMod), corners.tr.y + (features.wireframeRandomness[wireframeRandomPointer + 5] * w / wMod))
+                        ctx.moveTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 10] * w / wMod) - shadowHeight, corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 11] * w / wMod) - shadowHeight)
+                        ctx.lineTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 6] * w / wMod), corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 7] * w / wMod))
+                        // ctx.lineTo(corners.tr.x + (features.wireframeRandomness[wireframeRandomPointer + 8] * w / wMod), corners.tr.y + (features.wireframeRandomness[wireframeRandomPointer + 9] * w / wMod))
+                        // ctx.moveTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 10] * w / wMod), corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 11] * w / wMod))
+                        // ctx.lineTo(corners.tl.x + (features.wireframeRandomness[wireframeRandomPointer + 12] * w / wMod - shadowHeight), corners.tl.y + (features.wireframeRandomness[wireframeRandomPointer + 13] * w / wMod) - shadowHeight)
+                        wireframeRandomPointer += 14
                       }
+                      ctx.stroke()
                     }
 
                     // Now work out the positions of the inner corners
