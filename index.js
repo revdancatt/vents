@@ -252,11 +252,13 @@ const makeFeatures = () => {
   features.drawOnlyOne = false
   features.drawOnlyTwo = false
   if (features.tiles > 1 && features.tiles < 6) {
-    if (fxrand() < 0.03) features.drawOnlyOne = true
-    if (features.tiles > 3) {
-      if (fxrand() < 0.8) {
-        features.drawOnlyOne = false
-        features.drawOnlyTwo = true
+    if (fxrand() < 0.02) {
+      features.drawOnlyOne = true
+      if (features.tiles > 3) {
+        if (fxrand() < 0.6) {
+          features.drawOnlyOne = false
+          features.drawOnlyTwo = true
+        }
       }
     }
   }
@@ -411,7 +413,7 @@ const makeFeatures = () => {
   }
 
   // Sometimes we just show the wireframe
-  features.showWireframe = fxrand() < 0.16
+  features.showWireframe = fxrand() < 0.075
 
   // And we want to store randomness to use for the wireframes
   features.wireframeRandomness = []
