@@ -14,15 +14,6 @@ https://studioyorktown.github.io/coloryorktownhall/
 
 // eslint-disable-next-line no-unused-vars
 const palettes = [{
-  name: 'Shirokuro',
-  colors: [{
-    value: '#f9f0de',
-    name: 'Paperwhite'
-  }, {
-    value: '#392b24',
-    name: 'English Walnut'
-  }]
-}, {
   name: 'Marunouchi',
   colors: [{
     value: '#f9f0de',
@@ -362,24 +353,6 @@ const palettes = [{
     name: 'Muted Mauve'
   }]
 }, {
-  name: 'Arianda',
-  colors: [{
-    value: '#d95f76',
-    name: 'Feverish'
-  }, {
-    value: '#b5a2a1',
-    name: 'Grey Sheep'
-  }, {
-    value: '#f2911b',
-    name: 'Elden Ring Orange'
-  }, {
-    value: '#d9501e',
-    name: 'Langoustine'
-  }, {
-    value: '#d93829',
-    name: 'Devilish'
-  }]
-}, {
   name: 'Benelit',
   colors: [{
     value: '#f2f5ee',
@@ -396,42 +369,6 @@ const palettes = [{
   }, {
     value: '#201c1d',
     name: 'Umbra'
-  }]
-}, {
-  name: 'Bradshaw',
-  colors: [{
-    value: '#f28095',
-    name: 'Xoxo'
-  }, {
-    value: '#da5069',
-    name: 'Cranberry Splash'
-  }, {
-    value: '#fc8461',
-    name: 'Bonfire'
-  }, {
-    value: '#e19a7e',
-    name: 'Blushing Rose'
-  }, {
-    value: '#cea39d',
-    name: 'La Vie en Rose'
-  }]
-}, {
-  name: 'Burnt Berry',
-  colors: [{
-    value: '#dccfc6',
-    name: 'Mocha Ice'
-  }, {
-    value: '#9d917b',
-    name: 'Nomad'
-  }, {
-    value: '#463a2a',
-    name: 'Dark Rum'
-  }, {
-    value: '#d6c2b9',
-    name: 'Wild Rice'
-  }, {
-    value: '#b76750',
-    name: 'Bruschetta'
   }]
 }, {
   name: 'Cacti Bloom',
@@ -614,24 +551,6 @@ const palettes = [{
     name: 'Chocoholic'
   }]
 }, {
-  name: 'Gelato Prime',
-  colors: [{
-    value: '#f29f05',
-    name: 'Mad For Mango'
-  }, {
-    value: '#f3ab00',
-    name: 'Spicy Sweetcorn'
-  }, {
-    value: '#efc362',
-    name: 'French Fry'
-  }, {
-    value: '#722835',
-    name: 'Merlot Fields'
-  }, {
-    value: '#d44f49',
-    name: 'Horror Snob'
-  }]
-}, {
   name: 'Grace',
   colors: [{
     value: '#dfd4cb',
@@ -704,24 +623,6 @@ const palettes = [{
     name: 'Heavy Green'
   }]
 }, {
-  name: 'Marit',
-  colors: [{
-    value: '#f1ab94',
-    name: 'No Way Rosé'
-  }, {
-    value: '#e9cbb2',
-    name: 'Cashew Nut'
-  }, {
-    value: '#e0d7bd',
-    name: 'Deserted Beach'
-  }, {
-    value: '#e3820e',
-    name: 'Elden Ring Orange'
-  }, {
-    value: '#d06709',
-    name: 'Cinnamon'
-  }]
-}, {
   name: 'Marshmallow Sunset',
   colors: [{
     value: '#50566c',
@@ -756,42 +657,6 @@ const palettes = [{
   }, {
     value: '#9ca692',
     name: 'Edamame'
-  }]
-}, {
-  name: 'Mulberry',
-  colors: [{
-    value: '#e1cfdf',
-    name: 'Decadial Pink'
-  }, {
-    value: '#adabae',
-    name: 'Ultimate Grey'
-  }, {
-    value: '#204d50',
-    name: 'Emerald Forest'
-  }, {
-    value: '#133536',
-    name: 'Elite Teal'
-  }, {
-    value: '#aa7346',
-    name: 'Brown Sugar'
-  }]
-}, {
-  name: 'Napoli',
-  colors: [{
-    value: '#bf7c03',
-    name: 'Caramel Coating'
-  }, {
-    value: '#e7e3de',
-    name: 'Ghosted'
-  }, {
-    value: '#696262',
-    name: 'Caveman'
-  }, {
-    value: '#f2b8bf',
-    name: 'Blush Rush'
-  }, {
-    value: '#131210',
-    name: 'Dark Veil'
   }]
 }, {
   name: 'Nasturtiums',
@@ -884,24 +749,6 @@ const palettes = [{
     name: 'Liquid Lava'
   }]
 }, {
-  name: 'Okage',
-  colors: [{
-    value: '#ff4b2a',
-    name: 'Dynamite'
-  }, {
-    value: '#ff9488',
-    name: 'Mona Lisa'
-  }, {
-    value: '#f1857a',
-    name: 'Jinza Safflower'
-  }, {
-    value: '#d6d6d6',
-    name: 'Disco Ball'
-  }, {
-    value: '#413b31',
-    name: 'Creole'
-  }]
-}, {
   name: 'Pink Whiskey',
   colors: [{
     value: '#f2ede9',
@@ -954,24 +801,6 @@ const palettes = [{
   }, {
     value: '#d91604',
     name: 'Red Pegasus'
-  }]
-}, {
-  name: 'Pot Pourri',
-  colors: [{
-    value: '#c6a890',
-    name: 'Frappé'
-  }, {
-    value: '#3e2924',
-    name: 'English Walnut'
-  }, {
-    value: '#feba3d',
-    name: 'Glowing Lantern'
-  }, {
-    value: '#fecabd',
-    name: 'Peach Fuzz'
-  }, {
-    value: '#fb4a1a',
-    name: 'Dragon Fire'
   }]
 }, {
   name: 'Scarry',
@@ -1046,24 +875,6 @@ const palettes = [{
     name: 'Spicy Sweetcorn'
   }]
 }, {
-  name: 'Sunflower',
-  colors: [{
-    value: '#eeacb0',
-    name: 'Deeply Embarrassed'
-  }, {
-    value: '#e94b24',
-    name: 'Hot Shot'
-  }, {
-    value: '#020001',
-    name: "Raven's Coat"
-  }, {
-    value: '#f6cb0d',
-    name: 'Egg Toast'
-  }, {
-    value: '#f3e6de',
-    name: "Grandma's Cameo"
-  }]
-}, {
   name: 'Takamaki',
   colors: [{
     value: '#bf4974',
@@ -1080,5 +891,44 @@ const palettes = [{
   }, {
     value: '#3c401d',
     name: 'Dark Olive'
+  }]
+}, {
+  name: 'best four colour palette evar',
+  colors: [{
+    value: '#000000',
+    name: 'Black'
+  }, {
+    value: '#FF00D0',
+    name: 'Vapor Magenta'
+  }, {
+    value: '#8101D7',
+    name: 'Vapor Purple'
+  }, {
+    value: '#04D1FF',
+    name: 'Definitely just one colour one'
+  }, {
+    value: '#03FFEA',
+    name: 'Definitely just one colour two'
+  }]
+}, {
+  name: 'Hair Car',
+  colors: [{
+    value: '#25AFE7',
+    name: 'Fringe Blue'
+  }, {
+    value: '#024DC0',
+    name: 'Unimaginatively Blue'
+  }, {
+    value: '#EE4B86',
+    name: 'Fringe Pink'
+  }, {
+    value: '#AF1303',
+    name: 'Undercut Red'
+  }, {
+    value: '#E19401',
+    name: 'Not Strawberry Blonde'
+  }, {
+    value: '#008C4E',
+    name: 'Too Cool For School'
   }]
 }]

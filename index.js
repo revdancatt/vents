@@ -151,262 +151,275 @@ const decideThings = (index) => {
 
 //  Work out what all our features are
 const makeFeatures = () => {
-  // Pick a random number of tiles between 3 and 6
-  features.tiles = Math.floor(fxrand() * 6) + 2
-  features.scaleDown = features.tiles * 2 / (features.tiles * 2 + 1)
-  features.ventLayoutMode = 'Random'
-  features.levelLayoutMode = 'None'
-  features.levelLayoutChance = 0.0
-  features.levelInvert = false
-
-  features.placementChance = 0
-  features.innyChance = 0.5
-  features.firstDivisionChance = 0.1
-  features.secondDivisionChance = 0.1
-  features.subdivisionPattern = 'None'
-  features.shadowHeightMod = 0.4
-
-  if (fxrand() < 0.20) features.ventLayoutMode = 'Pattern'
-  if (fxrand() < 0.8) {
-    features.levelLayoutMode = 'Random'
-    features.levelLayoutChance = 0.4
-    if (fxrand() < 0.2) features.levelLayoutChance = 0.1
-    if (fxrand() < 0.2) features.levelLayoutChance = 0.9
-    //  Now we may have a pattern
-    if (fxrand() < 0.4) {
-      features.levelLayoutMode = 'Checkerboard'
-      if (fxrand() < 0.5) features.levelInvert = true
-      if (fxrand() < 0.5) features.levelLayoutMode = 'Columns'
-      if (fxrand() < 0.33) features.levelLayoutMode = 'Rows'
-      if (fxrand() < 0.1) {
-        features.levelLayoutMode = 'Outside'
-        features.levelInvert = false
-        if (fxrand() < 0.1) features.levelInvert = true
-      }
-    }
-  }
-
-  // If the layout mode is Pattern, then we need to work out what pattern we're going to use
-  if (features.ventLayoutMode === 'Pattern') {
-    features.pattern = 'Checkerboard'
-    // What type of checkerboard?
-    features.subPattern = 'Flip'
-    if (fxrand() < 0.75) {
-      features.subPattern = 'Inny'
-      if (fxrand() < 0.5) features.subPattern = 'Outy'
-    }
-    // Do we start on the first or second tile?
-    features.startOnZero = fxrand() < 0.5
-    // If it's checkerboard, then we want to make sure there's no divisions
-    features.firstDivisionChance = 0
-  }
-
-  // There's a chance we mess around with the subdivisions
-  if (fxrand() < 0.04) {
-    features.subdivisionPattern = 'Down'
-  }
-
-  // The vent has a size
-  features.borderSize = 'Normal'
-  // Most of the time the vent size is normal, but sometimes we'll do something different
-  if (fxrand() < 0.5) {
-    // There's a chance we make the border smaller
-    if (fxrand() < 0.2) {
-      features.borderSize = 'Small'
-      if (fxrand() < 0.66) {
-        if (fxrand() < 0.5) {
-          features.borderSize = 'Tiny'
-        } else {
-          features.borderSize = 'None'
-        }
-      }
-    } else {
-      features.borderSize = 'Large'
-    }
-    // After all that, there's still a 10% chance we'll make it random
-    if (fxrand() < 0.1 && features.ventLayoutMode !== 'Pattern') features.borderSize = 'Random'
-  }
-
-  // If we are random, there's a small chance we'll do something different
-  if (fxrand() > 0.8) {
-    // It could be the everything everywhere thing
-    if (fxrand() > 0.0) {
-      // Either all in or all out
-      if (fxrand() > 0.5) {
-        features.ventLayoutMode = 'All In Everywhere All At Once'
-      } else {
-        features.ventLayoutMode = 'All Out Everywhere All At Once'
-      }
-    }
-  }
-
-  if (features.ventLayoutMode === 'Random') {
-    // Pick the chance of something being placed
-    features.placementChance = fxrand() * 0.6 + 0.2
-    // And now the chance it'll be an "inny" or an "outy"
-    features.innyChance = fxrand() * 0.8 + 0.1
-    // There is a 10% chance we'll make them either all in or all out
-    if (fxrand() < 0.1) {
-      features.innyChance = 0
-      if (fxrand() < 0.5) features.innyChance = 1
-    }
-  }
-
-  //  There is a chance we only draw one or two
-  features.drawOnlyOne = false
-  features.drawOnlyTwo = false
-  if (features.tiles > 1 && features.tiles < 6) {
-    if (fxrand() < 0.02) {
-      features.drawOnlyOne = true
-      if (features.tiles > 2) {
-        if (fxrand() < 0.6) {
-          features.drawOnlyOne = false
-          features.drawOnlyTwo = true
-        }
-      }
-    }
-  }
-
-  if (features.drawOnlyOne) {
+  let rejected = true
+  let escape = 0
+  while (rejected && escape < 20) {
+    rejected = false
+    // Pick a random number of tiles between 3 and 6
+    features.tiles = Math.floor(fxrand() * 6) + 2
+    features.scaleDown = features.tiles * 2 / (features.tiles * 2 + 1)
+    features.ventLayoutMode = 'Random'
     features.levelLayoutMode = 'None'
     features.levelLayoutChance = 0.0
-    features.ventLayoutMode = 'Random'
-    features.placementChance = 1
+    features.levelInvert = false
+
+    features.placementChance = 0
+    features.innyChance = 0.5
+    features.firstDivisionChance = 0.1
+    features.secondDivisionChance = 0.1
     features.subdivisionPattern = 'None'
-    features.firstDivisionChance = 0
-    features.secondDivisionChance = 0
-  }
+    features.shadowHeightMod = 0.4
 
-  // Sometimes we show noise
-  features.showNoise = fxrand() < 0.5
-  // We want 10,000 random points
-  features.noisePoints = []
-  for (let i = 0; i < 500000; i++) {
-    features.noisePoints.push({
-      x: fxrand(),
-      y: fxrand(),
-      shade: fxrand() < 0.5 ? 255 : 0
-    })
-  }
-
-  // The final grid map will be 4x the number of tiles
-  features.tileMap = {}
-  // Grab a random palette
-  features.palette = palettes[Math.floor(fxrand() * palettes.length)]
-  features.backgroundColour = '#ECE3D0'
-  features.backgroundColourName = 'Town Hall'
-  // Sometimes if there's more than three colours in the palette we'll remove one at random
-  // and use it as the background colour
-  if (features.palette.colors.length > 3 && fxrand() < 0.06666) {
-    const index = Math.floor(fxrand() * features.palette.colors.length)
-    features.backgroundColour = features.palette.colors[index].value
-    features.backgroundColourName = features.palette.colors[index].name
-    features.palette.colors.splice(index, 1)
-    features.showNoise = true
-  }
-
-  // Loop through y and x for the number of tiles
-  for (let y = 0; y < features.tiles; y++) {
-    for (let x = 0; x < features.tiles; x++) {
-      let level = 0
-      const tileSize = 4
-      // let xPercent = 0
-      let yPercent = 0
-      if (features.subdivisionPattern === 'Down') {
-        yPercent = 1 - (y / (features.tiles - 1))
-      }
-
-      // If we have a special level layout mode, then we need to work out what level this tile is
-      if (features.levelLayoutMode !== 'None') {
-        // If it's random do it random
-        if (features.levelLayoutMode === 'Random') {
-          if (fxrand() < features.levelLayoutChance) level = 1
-        }
-        // If it's checkerboard, then we need to work out if it's in or out
-        if (features.levelLayoutMode === 'Checkerboard') {
-          let isChecked = false
-          if (parseInt(x, 10) % 2 === 0) isChecked = true
-          if (parseInt(y, 10) % 2 === 0) isChecked = !isChecked
-          if (features.levelInvert) isChecked = !isChecked
-          if (isChecked) level = 1
-        }
-
-        // If we are in columns then we need to do it when x is even
-        if (features.levelLayoutMode === 'Columns') {
-          let isChecked = false
-          if (parseInt(x, 10) % 2 === 0) isChecked = true
-          if (features.levelInvert) isChecked = !isChecked
-          if (isChecked) level = 1
-        }
-
-        // If we are in rows then we need to do it when y is even
-        if (features.levelLayoutMode === 'Rows') {
-          let isChecked = false
-          if (parseInt(y, 10) % 2 === 0) isChecked = true
-          if (features.levelInvert) isChecked = !isChecked
-          if (isChecked) level = 1
-        }
-
-        // If we are in outside then we need to do it when we are on the outer edge
-        if (features.levelLayoutMode === 'Outside') {
-          let isChecked = false
-          if (x === 0 || x === features.tiles - 1 || y === 0 || y === features.tiles - 1) isChecked = true
-          if (features.levelInvert) isChecked = !isChecked
-          if (isChecked) level = 1
+    if (fxrand() < 0.8) {
+      features.levelLayoutMode = 'Random'
+      features.levelLayoutChance = 0.4
+      if (fxrand() < 0.2) features.levelLayoutChance = 0.1
+      if (fxrand() < 0.2) features.levelLayoutChance = 0.9
+      //  Now we may have a pattern
+      if (fxrand() < 0.4) {
+        features.levelLayoutMode = 'Checkerboard'
+        if (fxrand() < 0.5) features.levelInvert = true
+        if (fxrand() < 0.5) features.levelLayoutMode = 'Columns'
+        if (fxrand() < 0.33) features.levelLayoutMode = 'Rows'
+        if (fxrand() < 0.1) {
+          features.levelLayoutMode = 'Outside'
+          features.levelInvert = false
+          if (fxrand() < 0.1) features.levelInvert = true
         }
       }
+    }
 
-      // We can do recursion, but it's a pain in the ass to debug, so we are going to do this
-      // in a gnarly long way
-      // Put the current level into the tileMap, to do this we loop from the x, y multiplied by the tileSize
-      // these are ones we don't draw, but I do want to keep track of the level
-      for (let level0y = y * tileSize; level0y < y * tileSize + tileSize; level0y++) {
-        for (let level0x = x * tileSize; level0x < x * tileSize + tileSize; level0x++) {
-          features.tileMap[`${level0x},${level0y}`] = {
-            level,
-            drawMe: false
+    // If the layout mode is Pattern, then we need to work out what pattern we're going to use
+    if (fxrand() < 0.20) features.ventLayoutMode = 'Pattern'
+    if (features.ventLayoutMode === 'Pattern') {
+      features.pattern = 'Checkerboard'
+      // What type of checkerboard?
+      features.subPattern = 'Flip'
+      if (fxrand() < 0.75) {
+        features.subPattern = 'Inny'
+        if (fxrand() < 0.5) features.subPattern = 'Outy'
+      }
+      // Do we start on the first or second tile?
+      features.startOnZero = fxrand() < 0.5
+      // If it's checkerboard, then we want to make sure there's no divisions
+      features.firstDivisionChance = 0
+    }
+
+    // There's a chance we mess around with the subdivisions
+    if (fxrand() < 0.04) {
+      features.subdivisionPattern = 'Down'
+    }
+
+    // The vent has a size
+    features.borderSize = 'Normal'
+    // Most of the time the vent size is normal, but sometimes we'll do something different
+    if (fxrand() < 0.5) {
+      // There's a chance we make the border smaller
+      if (fxrand() < 0.2) {
+        features.borderSize = 'Small'
+        if (fxrand() < 0.66) {
+          if (fxrand() < 0.5) {
+            features.borderSize = 'Tiny'
+          } else {
+            features.borderSize = 'None'
           }
         }
-      }
-
-      // Decide if we are going to split this tile up, if not just make a good solid tile
-      if (fxrand() > features.firstDivisionChance && fxrand() > yPercent) {
-        // Don't split the tile
-        const index = `${x * tileSize},${y * tileSize}`
-        features.tileMap[index].tileSize = 4
-        decideThings(index)
       } else {
-        // Split the tile
-        for (let stepy = 0; stepy <= 2; stepy += 2) {
-          for (let stepx = 0; stepx <= 2; stepx += 2) {
-            let nextLevel = level
-            // Only flip the level if we are in the random mode
-            if (nextLevel === 0 && features.levelLayoutMode === 'Random') {
-              if (fxrand() < features.levelLayoutChance) {
-                nextLevel = 1
-              }
+        features.borderSize = 'Large'
+      }
+      // After all that, there's still a 10% chance we'll make it random
+      if (fxrand() < 0.1 && features.ventLayoutMode !== 'Pattern') features.borderSize = 'Random'
+    }
+
+    // If we are random, there's a small chance we'll do something different
+    if (fxrand() > 0.8) {
+      // It could be the everything everywhere thing
+      if (fxrand() > 0.0) {
+        // Either all in or all out
+        if (fxrand() > 0.5) {
+          features.ventLayoutMode = 'All In Everywhere All At Once'
+        } else {
+          features.ventLayoutMode = 'All Out Everywhere All At Once'
+        }
+      }
+    }
+
+    if (features.ventLayoutMode === 'Random') {
+      // Pick the chance of something being placed
+      features.placementChance = fxrand() * 0.6 + 0.2
+      // And now the chance it'll be an "inny" or an "outy"
+      features.innyChance = fxrand() * 0.8 + 0.1
+      // There is a 10% chance we'll make them either all in or all out
+      if (fxrand() < 0.1) {
+        features.innyChance = 0
+        if (fxrand() < 0.5) features.innyChance = 1
+      }
+    }
+
+    //  There is a chance we only draw one or two
+    features.drawOnlyOne = false
+    features.drawOnlyTwo = false
+    if (features.tiles > 1 && features.tiles < 6) {
+      if (fxrand() < 0.02) {
+        features.drawOnlyOne = true
+        if (features.tiles > 2) {
+          if (fxrand() < 0.6) {
+            features.drawOnlyOne = false
+            features.drawOnlyTwo = true
+          }
+        }
+      }
+    }
+
+    if (features.drawOnlyOne) {
+      features.levelLayoutMode = 'None'
+      features.levelLayoutChance = 0.0
+      features.ventLayoutMode = 'Random'
+      features.placementChance = 1
+      features.subdivisionPattern = 'None'
+      features.firstDivisionChance = 0
+      features.secondDivisionChance = 0
+    }
+
+    // Sometimes we show noise
+    features.showNoise = fxrand() < 0.5
+    // We want 10,000 random points
+    features.noisePoints = []
+    for (let i = 0; i < 500000; i++) {
+      features.noisePoints.push({
+        x: fxrand(),
+        y: fxrand(),
+        shade: fxrand() < 0.5 ? 255 : 0
+      })
+    }
+
+    // The final grid map will be 4x the number of tiles
+    features.tileMap = {}
+
+    // Sometimes we just show the wireframe
+    features.showWireframe = fxrand() < 0.075
+
+    // Grab a random palette
+    features.palette = palettes[Math.floor(fxrand() * palettes.length)]
+    features.backgroundColour = '#ECE3D0'
+    features.backgroundColourName = 'Town Hall'
+    let backgroundColourPickChance = 0.06666
+    // Increase the chance of a background colour if we're showing the wireframe
+    if (features.showWireframe) backgroundColourPickChance = 0.2
+
+    // Sometimes if there's more than three colours in the palette we'll remove one at random
+    // and use it as the background colour
+    if (features.palette.colors.length > 3 && fxrand() < backgroundColourPickChance) {
+      const index = Math.floor(fxrand() * features.palette.colors.length)
+      features.backgroundColour = features.palette.colors[index].value
+      features.backgroundColourName = features.palette.colors[index].name
+      features.palette.colors.splice(index, 1)
+      features.showNoise = true
+    }
+
+    // Loop through y and x for the number of tiles
+    for (let y = 0; y < features.tiles; y++) {
+      for (let x = 0; x < features.tiles; x++) {
+        let level = 0
+        const tileSize = 4
+        // let xPercent = 0
+        let yPercent = 0
+        if (features.subdivisionPattern === 'Down') {
+          yPercent = 1 - (y / (features.tiles - 1))
+        }
+
+        // If we have a special level layout mode, then we need to work out what level this tile is
+        if (features.levelLayoutMode !== 'None') {
+          // If it's random do it random
+          if (features.levelLayoutMode === 'Random') {
+            if (fxrand() < features.levelLayoutChance) level = 1
+          }
+          // If it's checkerboard, then we need to work out if it's in or out
+          if (features.levelLayoutMode === 'Checkerboard') {
+            let isChecked = false
+            if (parseInt(x, 10) % 2 === 0) isChecked = true
+            if (parseInt(y, 10) % 2 === 0) isChecked = !isChecked
+            if (features.levelInvert) isChecked = !isChecked
+            if (isChecked) level = 1
+          }
+
+          // If we are in columns then we need to do it when x is even
+          if (features.levelLayoutMode === 'Columns') {
+            let isChecked = false
+            if (parseInt(x, 10) % 2 === 0) isChecked = true
+            if (features.levelInvert) isChecked = !isChecked
+            if (isChecked) level = 1
+          }
+
+          // If we are in rows then we need to do it when y is even
+          if (features.levelLayoutMode === 'Rows') {
+            let isChecked = false
+            if (parseInt(y, 10) % 2 === 0) isChecked = true
+            if (features.levelInvert) isChecked = !isChecked
+            if (isChecked) level = 1
+          }
+
+          // If we are in outside then we need to do it when we are on the outer edge
+          if (features.levelLayoutMode === 'Outside') {
+            let isChecked = false
+            if (x === 0 || x === features.tiles - 1 || y === 0 || y === features.tiles - 1) isChecked = true
+            if (features.levelInvert) isChecked = !isChecked
+            if (isChecked) level = 1
+          }
+        }
+
+        // We can do recursion, but it's a pain in the ass to debug, so we are going to do this
+        // in a gnarly long way
+        // Put the current level into the tileMap, to do this we loop from the x, y multiplied by the tileSize
+        // these are ones we don't draw, but I do want to keep track of the level
+        for (let level0y = y * tileSize; level0y < y * tileSize + tileSize; level0y++) {
+          for (let level0x = x * tileSize; level0x < x * tileSize + tileSize; level0x++) {
+            features.tileMap[`${level0x},${level0y}`] = {
+              level,
+              drawMe: false
             }
-            // But we may split it even more
-            if (fxrand() > features.secondDivisionChance && fxrand() > yPercent) {
-              const index = `${x * tileSize + stepx},${y * tileSize + stepy}`
-              features.tileMap[index].tileSize = 2
-              features.tileMap[index].level = nextLevel
-              decideThings(index)
-            } else {
-              // Split it even more
-              let nextNextLevel = nextLevel
+          }
+        }
+
+        // Decide if we are going to split this tile up, if not just make a good solid tile
+        if (fxrand() > features.firstDivisionChance && fxrand() > yPercent) {
+          // Don't split the tile
+          const index = `${x * tileSize},${y * tileSize}`
+          features.tileMap[index].tileSize = 4
+          decideThings(index)
+        } else {
+          // Split the tile
+          for (let stepy = 0; stepy <= 2; stepy += 2) {
+            for (let stepx = 0; stepx <= 2; stepx += 2) {
+              let nextLevel = level
               // Only flip the level if we are in the random mode
-              if (nextNextLevel === 0 && features.levelLayoutMode === 'Random') {
+              if (nextLevel === 0 && features.levelLayoutMode === 'Random') {
                 if (fxrand() < features.levelLayoutChance) {
-                  nextNextLevel = 1
+                  nextLevel = 1
                 }
               }
-              for (let stepy2 = 0; stepy2 <= 1; stepy2++) {
-                for (let stepx2 = 0; stepx2 <= 1; stepx2++) {
-                  const index = `${x * tileSize + stepx + stepx2},${y * tileSize + stepy + stepy2}`
-                  features.tileMap[index].tileSize = 1
-                  features.tileMap[index].level = nextNextLevel
-                  decideThings(index)
+              // But we may split it even more
+              if (fxrand() > features.secondDivisionChance && fxrand() > yPercent) {
+                const index = `${x * tileSize + stepx},${y * tileSize + stepy}`
+                features.tileMap[index].tileSize = 2
+                features.tileMap[index].level = nextLevel
+                decideThings(index)
+              } else {
+                // Split it even more
+                let nextNextLevel = nextLevel
+                // Only flip the level if we are in the random mode
+                if (nextNextLevel === 0 && features.levelLayoutMode === 'Random') {
+                  if (fxrand() < features.levelLayoutChance) {
+                    nextNextLevel = 1
+                  }
+                }
+                for (let stepy2 = 0; stepy2 <= 1; stepy2++) {
+                  for (let stepx2 = 0; stepx2 <= 1; stepx2++) {
+                    const index = `${x * tileSize + stepx + stepx2},${y * tileSize + stepy + stepy2}`
+                    features.tileMap[index].tileSize = 1
+                    features.tileMap[index].level = nextNextLevel
+                    decideThings(index)
+                  }
                 }
               }
             }
@@ -414,54 +427,81 @@ const makeFeatures = () => {
         }
       }
     }
-  }
 
-  // Sometimes we just show the wireframe
-  features.showWireframe = fxrand() < 0.075
+    // And we want to store randomness to use for the wireframes
+    features.wireframeRandomness = []
+    for (let i = 0; i < 500000; i++) features.wireframeRandomness.push(fxrand() - 0.5)
 
-  // And we want to store randomness to use for the wireframes
-  features.wireframeRandomness = []
-  for (let i = 0; i < 500000; i++) features.wireframeRandomness.push(fxrand() - 0.5)
+    // Sometimes we are only drawing one or two
+    if (features.drawOnlyOne || features.drawOnlyTwo) {
+      // Pick a random x from between 1 and one less than the number of tiles
+      const x1 = parseInt(fxrand() * (features.tiles - 2), 10) + 1
+      // Pick a random y from between 1 and one less than the number of tiles
+      const y1 = parseInt(fxrand() * (features.tiles - 2), 10) + 1
+      const index1 = `${x1 * 4},${y1 * 4}`
+      // Now make a second index that is different to the first
+      let index2 = index1
+      let escape = 0
+      while (index2 === index1 && escape < 100) {
+        const x2 = parseInt(fxrand() * (features.tiles - 1), 10)
+        const y2 = parseInt(fxrand() * (features.tiles - 1), 10)
+        index2 = `${x2 * 4},${y2 * 4}`
+        escape++
+      }
 
-  // Sometimes we are only drawing one or two
-  if (features.drawOnlyOne || features.drawOnlyTwo) {
-    // Pick a random x from between 1 and one less than the number of tiles
-    const x1 = parseInt(fxrand() * (features.tiles - 2), 10) + 1
-    // Pick a random y from between 1 and one less than the number of tiles
-    const y1 = parseInt(fxrand() * (features.tiles - 2), 10) + 1
-    const index1 = `${x1 * 4},${y1 * 4}`
-    // Now make a second index that is different to the first
-    let index2 = index1
-    let escape = 0
-    while (index2 === index1 && escape < 100) {
-      const x2 = parseInt(fxrand() * (features.tiles - 1), 10)
-      const y2 = parseInt(fxrand() * (features.tiles - 1), 10)
-      index2 = `${x2 * 4},${y2 * 4}`
-      escape++
+      // Now make the first one drawMe true and level = 1
+      features.tileMap[index1].drawMe = true
+      features.tileMap[index1].level = 1
+      features.tileMap[index1].ventType = 'out'
+      if (fxrand() < features.innyChance) features.tileMap[index1].ventType = 'in'
+
+      if (features.drawOnlyTwo) {
+        // Now make the second one drawMe true and level = 1
+        features.tileMap[index2].drawMe = true
+        features.tileMap[index2].level = 1
+      }
     }
 
-    // Now make the first one drawMe true and level = 1
-    features.tileMap[index1].drawMe = true
-    features.tileMap[index1].level = 1
-    features.tileMap[index1].ventType = 'out'
-    if (fxrand() < features.innyChance) features.tileMap[index1].ventType = 'in'
-
-    if (features.drawOnlyTwo) {
-      // Now make the second one drawMe true and level = 1
-      features.tileMap[index2].drawMe = true
-      features.tileMap[index2].level = 1
+    // Count how many vents we have, by looping through the tileMap
+    let vents = 0
+    let levels = 0
+    for (const key in features.tileMap) {
+      if (features.tileMap[key].drawMe && (features.tileMap[key].ventType === 'in' || features.tileMap[key].ventType === 'out')) vents++
+      if (features.tileMap[key].drawMe && features.tileMap[key].level === 1) levels++
     }
+    // If we have no vents then reject this and try again
+    if (vents === 0) rejected = true
+    // If we don't have any levels, but our level layout isn't 'None' then reject this and try again
+    if (levels === 0 && features.levelLayoutMode !== 'None') rejected = true
+    escape++
   }
 }
 
 //  Call the above make features, so we'll have the window.$fxhashFeatures available
 //  for fxhash
 makeFeatures()
-const copyFeatures = JSON.parse(JSON.stringify(features))
-delete copyFeatures.tileMap
-delete copyFeatures.noisePoints
-delete copyFeatures.wireframeRandomness
-console.table(copyFeatures)
+
+window.$fxhashFeatures['Grid Size'] = features.tiles
+window.$fxhashFeatures.Palette = features.palette.name
+window.$fxhashFeatures['Background Colour'] = features.backgroundColourName
+window.$fxhashFeatures['Vent Layout'] = features.ventLayoutMode
+if (window.$fxhashFeatures['Vent Layout'] === 'None') {
+  if (features.innyChance === 0) window.$fxhashFeatures['Vent Layout'] = 'Attempted All Out'
+  if (features.innyChance === 1) window.$fxhashFeatures['Vent Layout'] = 'Attempted All In'
+}
+
+window.$fxhashFeatures['Vent Size'] = features.borderSize
+if (window.$fxhashFeatures['Vent Size'] !== 'Normal') window.$fxhashFeatures['Vent Size'] = 'Not Normal'
+window.$fxhashFeatures['Level Layout'] = features.levelLayoutMode
+window.$fxhashFeatures['Subdivision Special'] = features.subdivisionPattern !== 'None'
+window.$fxhashFeatures['Wireframe Mode'] = features.showWireframe
+if (features.drawOnlyOne || features.drawOnlyTwo) {
+  window.$fxhashFeatures['Vent Layout'] = 'Special'
+  window.$fxhashFeatures['Level Layout'] = 'Special'
+}
+if (window.$fxhashFeatures['Level Layout'] === 'None') window.$fxhashFeatures['Level Layout'] = 'Flat'
+
+console.table(window.$fxhashFeatures)
 
 const init = async () => {
   //  I should add a timer to this, but really how often to people who aren't
@@ -812,9 +852,9 @@ const drawCanvas = async () => {
     fxpreview()
   }
 
-  await autoDownloadCanvas()
+  // await autoDownloadCanvas()
   // reload the webpage
-  window.location.reload()
+  // window.location.reload()
 }
 
 const autoDownloadCanvas = async (showHash = false) => {
