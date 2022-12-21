@@ -68,6 +68,18 @@ const palettes = [{
     name: 'English Walnut'
   }]
 }, {
+  name: 'Kafica',
+  colors: [{
+    value: '#f9f0de',
+    name: 'Paperwhite'
+  }, {
+    value: '#d0bba3',
+    name: 'Cozy Wool'
+  }, {
+    value: '#927154',
+    name: 'Whisky Barrel'
+  }]
+}, {
   name: 'Hygge',
   colors: [{
     value: '#f9f0de',
@@ -78,6 +90,21 @@ const palettes = [{
   }, {
     value: '#726c5d',
     name: 'Archeology'
+  }, {
+    value: '#392b24',
+    name: 'English Walnut'
+  }]
+}, {
+  name: 'Kyoto',
+  colors: [{
+    value: '#f9f0de',
+    name: 'Paperwhite'
+  }, {
+    value: '#c67333',
+    name: 'Cajeta'
+  }, {
+    value: '#927154',
+    name: 'Whisky Barrel'
   }, {
     value: '#392b24',
     name: 'English Walnut'
@@ -96,6 +123,24 @@ const palettes = [{
   }, {
     value: '#fab511',
     name: 'Waxy Corn'
+  }, {
+    value: '#392b24',
+    name: 'English Walnut'
+  }]
+}, {
+  name: 'Grammercy',
+  colors: [{
+    value: '#f9f0de',
+    name: 'Paperwhite'
+  }, {
+    value: '#fab511',
+    name: 'Waxy Corn'
+  }, {
+    value: '#c67333',
+    name: 'Cajeta'
+  }, {
+    value: '#927154',
+    name: 'Whisky Barrel'
   }, {
     value: '#392b24',
     name: 'English Walnut'
@@ -230,6 +275,21 @@ const palettes = [{
     name: 'Twilight Zone'
   }]
 }, {
+  name: 'Auberge du Jaune',
+  colors: [{
+    value: '#f5b000',
+    name: 'Waxy Corn'
+  }, {
+    value: '#ffe4ac',
+    name: 'Honey Bee'
+  }, {
+    value: '#eabd75',
+    name: 'Polenta'
+  }, {
+    value: '#f9f0de',
+    name: 'Paperwhite'
+  }]
+}, {
   name: 'Shibuya',
   colors: [{
     value: '#1d1d1b',
@@ -344,6 +404,24 @@ const palettes = [{
     name: 'Elden Ring Orange'
   }]
 }, {
+  name: 'Anaheim',
+  colors: [{
+    value: '#ebdfd3',
+    name: 'Dallas Dust'
+  }, {
+    value: '#df9f2c',
+    name: 'Tiger King'
+  }, {
+    value: '#5b3524',
+    name: 'Chocolate Escape'
+  }, {
+    value: '#a09684',
+    name: 'Nomad'
+  }, {
+    value: '#8b7f6c',
+    name: 'Home Brew'
+  }]
+}, {
   name: 'Ando',
   colors: [{
     value: '#2b292b',
@@ -380,6 +458,24 @@ const palettes = [{
     name: 'Devilish'
   }]
 }, {
+  name: 'Asuka',
+  colors: [{
+    value: '#bfb7af',
+    name: 'Moonbeam'
+  }, {
+    value: '#d8ccc0',
+    name: 'Coconut Macaroon'
+  }, {
+    value: '#f2e2d5',
+    name: 'Hint of Orange'
+  }, {
+    value: '#a59f9b',
+    name: 'Gateway Grey'
+  }, {
+    value: '#f2d7cd',
+    name: 'Air-Kiss'
+  }]
+}, {
   name: 'Benelit',
   colors: [{
     value: '#f2f5ee',
@@ -396,6 +492,42 @@ const palettes = [{
   }, {
     value: '#201c1d',
     name: 'Umbra'
+  }]
+}, {
+  name: 'Blush Response',
+  colors: [{
+    value: '#8c4a50',
+    name: 'Red Elegance'
+  }, {
+    value: '#c35b4e',
+    name: 'Tandoori'
+  }, {
+    value: '#d9aa8f',
+    name: 'Lunatic Lynx'
+  }, {
+    value: '#e5cbbf',
+    name: 'Humble Blush'
+  }, {
+    value: '#f2edea',
+    name: 'Holy Ghost'
+  }]
+}, {
+  name: 'Bosmak',
+  colors: [{
+    value: '#f7eee5',
+    name: 'Linen'
+  }, {
+    value: '#f7bb41',
+    name: 'NYC Taxi'
+  }, {
+    value: '#f6c698',
+    name: 'Chai Latte'
+  }, {
+    value: '#f8fdff',
+    name: 'Heart of Ice'
+  }, {
+    value: '#f2a476',
+    name: 'Flaming Cauldron'
   }]
 }, {
   name: 'Bradshaw',
@@ -470,6 +602,42 @@ const palettes = [{
     name: 'Dazzling Red'
   }]
 }, {
+  name: 'Cappadocia',
+  colors: [{
+    value: '#eeeff4',
+    name: 'Paper White'
+  }, {
+    value: '#d1bbae',
+    name: 'Wild Rice'
+  }, {
+    value: '#1d1e23',
+    name: 'Noble Black'
+  }, {
+    value: '#b14441',
+    name: 'Landjäger'
+  }, {
+    value: '#af8976',
+    name: 'Nougat'
+  }]
+}, {
+  name: 'Caramel',
+  colors: [{
+    value: '#d3c3b6',
+    name: 'Coconut Macaroon'
+  }, {
+    value: '#bab2a7',
+    name: 'Silver Lining'
+  }, {
+    value: '#bf9c74',
+    name: 'Cardboard'
+  }, {
+    value: '#bf5b03',
+    name: 'Bloodhound'
+  }, {
+    value: '#993503',
+    name: 'Chocoholic'
+  }]
+}, {
   name: 'Checkov',
   colors: [{
     value: '#112233',
@@ -488,6 +656,24 @@ const palettes = [{
     name: 'Clay'
   }]
 }, {
+  name: 'Chiharu',
+  colors: [{
+    value: '#dbd0c3',
+    name: 'Wheat Sheaf'
+  }, {
+    value: '#f2a74b',
+    name: 'Pani Puri'
+  }, {
+    value: '#d88236',
+    name: 'Touch of Glamor'
+  }, {
+    value: '#724116',
+    name: 'Walnut'
+  }, {
+    value: '#a55f21',
+    name: 'Mai Tai'
+  }]
+}, {
   name: 'Cocos',
   colors: [{
     value: '#0c0c0e',
@@ -504,6 +690,42 @@ const palettes = [{
   }, {
     value: '#f8fdfe',
     name: 'Polar Bear In A Blizzard'
+  }]
+}, {
+  name: 'Coffee Cup',
+  colors: [{
+    value: '#32363f',
+    name: 'After Midnight'
+  }, {
+    value: '#d7cec5',
+    name: 'Smoked Oyster'
+  }, {
+    value: '#f3efec',
+    name: 'Magical Moonlight'
+  }, {
+    value: '#956446',
+    name: 'Argan Oil'
+  }, {
+    value: '#e6e2df',
+    name: 'Ghosted'
+  }]
+}, {
+  name: 'Earthenware',
+  colors: [{
+    value: '#918679',
+    name: 'Eiffel Tower'
+  }, {
+    value: '#d1c9be',
+    name: 'Argento'
+  }, {
+    value: '#fafafa',
+    name: 'Dr. White'
+  }, {
+    value: '#594b42',
+    name: 'Turf'
+  }, {
+    value: '#d3a679',
+    name: 'Porcini'
   }]
 }, {
   name: 'Edo',
@@ -668,6 +890,24 @@ const palettes = [{
     name: 'Angry Flamingo'
   }]
 }, {
+  name: 'Hermione',
+  colors: [{
+    value: '#d98b2b',
+    name: 'Soft Pumpkin'
+  }, {
+    value: '#a35e46',
+    name: 'Vintage Copper'
+  }, {
+    value: '#d3d3d3',
+    name: 'Pinball'
+  }, {
+    value: '#d9593d',
+    name: 'Tiger Lily'
+  }, {
+    value: '#d9bbb8',
+    name: 'Garden Snail'
+  }]
+}, {
   name: 'High Fashion',
   colors: [{
     value: '#cd2525',
@@ -684,6 +924,114 @@ const palettes = [{
   }, {
     value: '#ddd8d4',
     name: 'Marble Quarry'
+  }]
+}, {
+  name: 'Hua Kanda',
+  colors: [{
+    value: '#ecf2f0',
+    name: 'Warp Drive'
+  }, {
+    value: '#d9946c',
+    name: "Summer's End"
+  }, {
+    value: '#260b01',
+    name: 'Dwarf Fortress'
+  }, {
+    value: '#80875e',
+    name: 'Green Relict'
+  }, {
+    value: '#d96459',
+    name: 'Track and Field'
+  }]
+}, {
+  name: 'Kekkon',
+  colors: [{
+    value: '#f2eee5',
+    name: "Cow's Milk"
+  }, {
+    value: '#d9bea7',
+    name: 'Soba'
+  }, {
+    value: '#bf9a7a',
+    name: 'French Oak'
+  }, {
+    value: '#73554c',
+    name: 'Bigfoot'
+  }, {
+    value: '#bf7e78',
+    name: 'Gypsy Dancer'
+  }]
+}, {
+  name: 'Koh Chela',
+  colors: [{
+    value: '#cc8f5c',
+    name: 'Whiskey Sour'
+  }, {
+    value: '#935a45',
+    name: 'Coconut'
+  }, {
+    value: '#968579',
+    name: 'Ruins of Metal'
+  }, {
+    value: '#8c3211',
+    name: 'Choco Chic'
+  }, {
+    value: '#753326',
+    name: 'Ebi Brown'
+  }]
+}, {
+  name: 'Lotus Plain',
+  colors: [{
+    value: '#eae6e2',
+    name: 'Holy Ghost'
+  }, {
+    value: '#d9865a',
+    name: 'Copperhead'
+  }, {
+    value: '#4f616f',
+    name: 'Seven Seas'
+  }, {
+    value: '#f2bfac',
+    name: 'Dolly Cheek'
+  }, {
+    value: '#d96055',
+    name: 'Track and Field'
+  }]
+}, {
+  name: 'Makoto',
+  colors: [{
+    value: '#b0a48e',
+    name: 'Forgotten Sandstone'
+  }, {
+    value: '#f1c7ae',
+    name: 'Bellini'
+  }, {
+    value: '#f3f0eb',
+    name: 'Cloud Dancer'
+  }, {
+    value: '#aa8773',
+    name: 'Nougat'
+  }, {
+    value: '#e4cbb7',
+    name: 'Cashew Nut'
+  }]
+}, {
+  name: 'Mallow',
+  colors: [{
+    value: '#bdbbbf',
+    name: 'Moonwalk'
+  }, {
+    value: '#e3e1e5',
+    name: 'Festive Ferret'
+  }, {
+    value: '#f0cec7',
+    name: 'Bloodthirsty Beige'
+  }, {
+    value: '#a7999a',
+    name: 'Walkway'
+  }, {
+    value: '#edd8d1',
+    name: 'Fiesta'
   }]
 }, {
   name: 'Maneki',
@@ -738,6 +1086,24 @@ const palettes = [{
   }, {
     value: '#dbb48d',
     name: 'Brandy'
+  }]
+}, {
+  name: 'Monatsblatter',
+  colors: [{
+    value: '#f0ede4',
+    name: 'Coconut Milk'
+  }, {
+    value: '#f0ede4',
+    name: 'Silky White'
+  }, {
+    value: '#f0ede4',
+    name: 'Whipped Cream'
+  }, {
+    value: '#403a36',
+    name: 'Kilimanjaro'
+  }, {
+    value: '#26221a',
+    name: 'Soulless'
   }]
 }, {
   name: 'Morgana',
@@ -900,6 +1266,24 @@ const palettes = [{
   }, {
     value: '#413b31',
     name: 'Creole'
+  }]
+}, {
+  name: 'Okumura',
+  colors: [{
+    value: '#262326',
+    name: 'Darth Vader'
+  }, {
+    value: '#a69b8d',
+    name: 'Shiitake'
+  }, {
+    value: '#d9b79a',
+    name: 'Cashmere'
+  }, {
+    value: '#d9a08b',
+    name: 'Apricotta'
+  }, {
+    value: '#a67e7b',
+    name: 'Dusty Duchess'
   }]
 }, {
   name: 'Pink Whiskey',
@@ -1080,5 +1464,41 @@ const palettes = [{
   }, {
     value: '#3c401d',
     name: 'Dark Olive'
+  }]
+}, {
+  name: 'The Phantom Geisha',
+  colors: [{
+    value: '#f1f3ee',
+    name: 'Pearl White'
+  }, {
+    value: '#bf925a',
+    name: 'Caramel Crumb'
+  }, {
+    value: '#464e41',
+    name: 'Deep Forest'
+  }, {
+    value: '#a62014',
+    name: 'Büchel Cherry'
+  }, {
+    value: '#bf1515',
+    name: 'Heartwarming'
+  }]
+}, {
+  name: 'Vegan Cheesecake',
+  colors: [{
+    value: '#e6e4cc',
+    name: 'Nylon'
+  }, {
+    value: '#bf8c60',
+    name: 'Deer'
+  }, {
+    value: '#d03814',
+    name: 'Dazzling Red'
+  }, {
+    value: '#97632b',
+    name: 'Woodgrain'
+  }, {
+    value: '#edbeaa',
+    name: 'Fatty Sashimi'
   }]
 }]

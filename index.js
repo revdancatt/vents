@@ -121,8 +121,12 @@ const decideThings = (index) => {
       if (features.startOnZero) isChecked = !isChecked
 
       // Based on the subPattern we need to do different things
-      if (features.subPattern === 'Inny') if (isChecked) features.tileMap[index].ventType = 'in'
-      if (features.subPattern === 'Outy') if (isChecked) features.tileMap[index].ventType = 'out'
+      if (features.subPattern === 'Inny') {
+        if (isChecked) features.tileMap[index].ventType = 'in'
+      }
+      if (features.subPattern === 'Outy') {
+        if (isChecked) features.tileMap[index].ventType = 'out'
+      }
       if (features.subPattern === 'Flip') {
         if (isChecked) {
           features.tileMap[index].ventType = 'in'
@@ -254,7 +258,7 @@ const makeFeatures = () => {
   if (features.tiles > 1 && features.tiles < 6) {
     if (fxrand() < 0.02) {
       features.drawOnlyOne = true
-      if (features.tiles > 3) {
+      if (features.tiles > 2) {
         if (fxrand() < 0.6) {
           features.drawOnlyOne = false
           features.drawOnlyTwo = true
@@ -430,8 +434,8 @@ const makeFeatures = () => {
     let index2 = index1
     let escape = 0
     while (index2 === index1 && escape < 100) {
-      const x2 = parseInt(fxrand() * (features.tiles - 2), 10) + 1
-      const y2 = parseInt(fxrand() * (features.tiles - 2), 10) + 1
+      const x2 = parseInt(fxrand() * (features.tiles - 1), 10)
+      const y2 = parseInt(fxrand() * (features.tiles - 1), 10)
       index2 = `${x2 * 4},${y2 * 4}`
       escape++
     }
