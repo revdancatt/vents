@@ -500,6 +500,7 @@ if (features.drawOnlyOne || features.drawOnlyTwo) {
   window.$fxhashFeatures['Level Layout'] = 'Special'
 }
 if (window.$fxhashFeatures['Level Layout'] === 'None') window.$fxhashFeatures['Level Layout'] = 'Flat'
+window.$fxhashFeatures['Show Noise Initially'] = features.showNoise
 
 console.table(window.$fxhashFeatures)
 
@@ -548,9 +549,11 @@ const layoutCanvas = async () => {
   }
 
   // Round the canvas size to take into account the number of tiles
-  const roundingValue = features.tiles * 4 * 100 / features.scaleDown
-  canvas.width = Math.floor(canvas.width / roundingValue) * roundingValue
-  canvas.height = Math.floor(canvas.height / roundingValue) * roundingValue
+  if (!highRes) {
+    const roundingValue = features.tiles * 4 * 100 / features.scaleDown
+    canvas.width = Math.floor(canvas.width / roundingValue) * roundingValue
+    canvas.height = Math.floor(canvas.height / roundingValue) * roundingValue
+  }
 
   canvas.style.position = 'absolute'
   canvas.style.width = `${cWidth}px`
@@ -852,6 +855,7 @@ const drawCanvas = async () => {
     fxpreview()
   }
 
+  // Download the canvas
   // await autoDownloadCanvas()
   // reload the webpage
   // window.location.reload()
