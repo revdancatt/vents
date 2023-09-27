@@ -1,4 +1,4 @@
-/* global preloadImagesTmr fxhash fxrand fxpreview palettes */
+/* global $fx preloadImagesTmr fxhash fxrand fxpreview palettes */
 
 //
 //  fxhash - Vents
@@ -17,13 +17,21 @@
 //  https://youtube.com/revdancatt
 //
 
-const ratio = 1
-// const startTime = new Date().getTime() // so we can figure out how long since the scene started
-let drawn = false
+// Global values, because today I'm being an artist not an engineer!
+const ratio = 1 // canvas ratio
+const features = {} //  so we can keep track of what we're doing
+const nextFrame = null // requestAnimationFrame, and the ability to clear it
+let resizeTmr = null // a timer to make sure we don't resize too often
 let highRes = false // display high or low res
-const features = {}
-let resizeTmr = null
+let drawStarted = false // Flag if we have kicked off the draw loop
 let thumbnailTaken = false
+let forceDownloaded = false
+const urlSearchParams = new URLSearchParams(window.location.search)
+const urlParams = Object.fromEntries(urlSearchParams.entries())
+const prefix = 'vents'
+// dumpOutputs will be set to false unless we have ?dumpOutputs=true in the URL
+const dumpOutputs = urlParams.dumpOutputs === 'true'
+// const startTime = new Date().getTime()
 
 window.$fxhashFeatures = {}
 
@@ -502,73 +510,10 @@ if (features.drawOnlyOne || features.drawOnlyTwo) {
 if (window.$fxhashFeatures['Level Layout'] === 'None') window.$fxhashFeatures['Level Layout'] = 'Flat'
 window.$fxhashFeatures['Show Noise Initially'] = features.showNoise
 
-console.table(window.$fxhashFeatures)
-
-const init = async () => {
-  //  I should add a timer to this, but really how often to people who aren't
-  //  the developer resize stuff all the time. Stick it in a digital frame and
-  //  have done with it!
-  window.addEventListener('resize', async () => {
-    //  If we do resize though, work out the new size...
-    clearTimeout(resizeTmr)
-    resizeTmr = setTimeout(async () => {
-      await layoutCanvas()
-    }, 100)
-  })
-
-  //  Now layout the canvas
-  await layoutCanvas()
-}
-
-const layoutCanvas = async () => {
-  const wWidth = window.innerWidth
-  const wHeight = window.innerHeight
-  let cWidth = wWidth
-  let cHeight = cWidth * ratio
-  if (cHeight > wHeight) {
-    cHeight = wHeight
-    cWidth = wHeight / ratio
-  }
-  const canvas = document.getElementById('target')
-  if (highRes) {
-    canvas.height = 8192
-    canvas.width = 8192 / ratio
-  } else {
-    canvas.width = Math.min((8192 / 2), cWidth * 2)
-    canvas.height = Math.min((8192 / ratio / 2), cHeight * 2)
-    //  Minimum size to be half of the high rez cersion
-    if (Math.min(canvas.width, canvas.height) < 8192 / 2) {
-      if (canvas.width < canvas.height) {
-        canvas.height = 8192 / 2
-        canvas.width = 8192 / 2 / ratio
-      } else {
-        canvas.width = 8192 / 2
-        canvas.height = 8192 / 2 / ratio
-      }
-    }
-  }
-
-  // Round the canvas size to take into account the number of tiles
-  if (!highRes) {
-    const roundingValue = features.tiles * 4 * 100 / features.scaleDown
-    canvas.width = Math.floor(canvas.width / roundingValue) * roundingValue
-    canvas.height = Math.floor(canvas.height / roundingValue) * roundingValue
-  }
-
-  canvas.style.position = 'absolute'
-  canvas.style.width = `${cWidth}px`
-  canvas.style.height = `${cHeight}px`
-  canvas.style.left = `${(wWidth - cWidth) / 2}px`
-  canvas.style.top = `${(wHeight - cHeight) / 2}px`
-
-  //  And draw it!!
-  drawCanvas()
-}
-
 const drawCanvas = async () => {
   //  Let the preloader know that we've hit this function at least once
-  drawn = true
-
+  drawStarted = true
+  // Grab all the canvas stuff
   const canvas = document.getElementById('target')
   const ctx = canvas.getContext('2d')
   const w = canvas.width
@@ -850,34 +795,166 @@ const drawCanvas = async () => {
     }
   }
 
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  //
+  // Below is code that is common to all the projects, there may be some
+  // customisation for animated work or special cases
+
+  // Try various methods to tell the parent window that we've drawn something
   if (!thumbnailTaken) {
+    try {
+      $fx.preview()
+    } catch (e) {
+      try {
+        fxpreview()
+      } catch (e) {
+      }
+    }
     thumbnailTaken = true
-    fxpreview()
   }
 
-  // Download the canvas
-  // await autoDownloadCanvas()
-  // reload the webpage
-  // window.location.reload()
+  // If we are forcing download, then do that now
+  if (dumpOutputs || ('forceDownload' in urlParams && forceDownloaded === false)) {
+    forceDownloaded = 'forceDownload' in urlParams
+    await autoDownloadCanvas()
+    // Tell the parent window that we have downloaded
+    window.parent.postMessage('forceDownloaded', '*')
+  } else {
+    //  We should wait for the next animation frame here
+    // nextFrame = window.requestAnimationFrame(drawCanvas)
+  }
+  //
+  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }
 
-const autoDownloadCanvas = async (showHash = false) => {
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// These are the common functions that are used by the canvas that we use
+// across all the projects, init sets up the resize event and kicks off the
+// layoutCanvas function.
+//
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+//  Call this to start everything off
+const init = async () => {
+  // Resize the canvas when the window resizes, but only after 100ms of no resizing
+  window.addEventListener('resize', async () => {
+    //  If we do resize though, work out the new size...
+    clearTimeout(resizeTmr)
+    resizeTmr = setTimeout(async () => {
+      await layoutCanvas()
+    }, 100)
+  })
+
+  //  Now layout the canvas
+  await layoutCanvas()
+}
+
+//  This is where we layout the canvas, and redraw the textures
+const layoutCanvas = async (windowObj = window, urlParamsObj = urlParams) => {
+  //  Kill the next animation frame (note, this isn't always used, only if we're animating)
+  windowObj.cancelAnimationFrame(nextFrame)
+
+  //  Get the window size, and devicePixelRatio
+  const { innerWidth: wWidth, innerHeight: wHeight, devicePixelRatio = 1 } = windowObj
+  let dpr = devicePixelRatio
+  let cWidth = wWidth
+  let cHeight = cWidth * ratio
+
+  if (cHeight > wHeight) {
+    cHeight = wHeight
+    cWidth = wHeight / ratio
+  }
+
+  // Grab any canvas elements so we can delete them
+  const canvases = document.getElementsByTagName('canvas')
+  Array.from(canvases).forEach(canvas => canvas.remove())
+
+  // Now set the target width and height
+  let targetHeight = highRes ? 4096 : cHeight
+  let targetWidth = targetHeight / ratio
+
+  //  If the alba params are forcing the width, then use that (only relevant for Alba)
+  if (windowObj.alba?.params?.width) {
+    targetWidth = window.alba.params.width
+    targetHeight = Math.floor(targetWidth * ratio)
+  }
+
+  // If *I* am forcing the width, then use that, and set the dpr to 1
+  // (as we want to render at the exact size)
+  if ('forceWidth' in urlParams) {
+    targetWidth = parseInt(urlParams.forceWidth)
+    targetHeight = Math.floor(targetWidth * ratio)
+    dpr = 1
+  }
+
+  // Update based on the dpr
+  targetWidth *= dpr
+  targetHeight *= dpr
+
+  //  Set the canvas width and height
+  const canvas = document.createElement('canvas')
+  canvas.id = 'target'
+  canvas.width = targetWidth
+  canvas.height = targetHeight
+  document.body.appendChild(canvas)
+
+  canvas.style.position = 'absolute'
+  canvas.style.width = `${cWidth}px`
+  canvas.style.height = `${cHeight}px`
+  canvas.style.left = `${(wWidth - cWidth) / 2}px`
+  canvas.style.top = `${(wHeight - cHeight) / 2}px`
+
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  //
+  // Custom code (for defining textures and buffer canvas goes here) if needed
+  //
+
+  //  Re-Create the paper pattern
+
+  drawCanvas()
+}
+
+//  This allows us to download the canvas as a PNG
+// If we are forcing the id then we add that to the filename
+const autoDownloadCanvas = async () => {
+  const canvas = document.getElementById('target')
+
+  // Create a download link
   const element = document.createElement('a')
-  element.setAttribute('download', `Vent_${fxhash}`)
+  const filename = 'forceId' in urlParams
+    ? `${prefix}_${urlParams.forceId.toString().padStart(4, '0')}_${fxhash}`
+    : `${prefix}_${fxhash}`
+  element.setAttribute('download', filename)
+
+  // Hide the link element
   element.style.display = 'none'
   document.body.appendChild(element)
-  let imageBlob = null
-  imageBlob = await new Promise(resolve => document.getElementById('target').toBlob(resolve, 'image/png'))
-  element.setAttribute('href', window.URL.createObjectURL(imageBlob, {
-    type: 'image/png'
-  }))
+
+  // Convert canvas to Blob and set it as the link's href
+  const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+  element.setAttribute('href', window.URL.createObjectURL(imageBlob))
+
+  // Trigger the download
   element.click()
+
+  // Clean up by removing the link element
   document.body.removeChild(element)
+
+  // Reload the page if dumpOutputs is true
+  if (dumpOutputs) {
+    window.location.reload()
+  }
 }
 
 //  KEY PRESSED OF DOOM
 document.addEventListener('keypress', async (e) => {
   e = e || window.event
+  // == Common controls ==
   // Save
   if (e.key === 's') autoDownloadCanvas()
 
@@ -888,6 +965,7 @@ document.addEventListener('keypress', async (e) => {
     await layoutCanvas()
   }
 
+  // Custom controls
   // If the key is n, toggle the noise
   if (e.key === 'n') {
     features.showNoise = !features.showNoise
@@ -895,11 +973,16 @@ document.addEventListener('keypress', async (e) => {
     await layoutCanvas()
   }
 })
+
 //  This preloads the images so we can get access to them
 // eslint-disable-next-line no-unused-vars
 const preloadImages = () => {
-  if (!drawn) {
+  //  Normally we would have a test
+  // if (true === true) {
+  if (!drawStarted) {
     clearInterval(preloadImagesTmr)
     init()
   }
 }
+
+console.table(window.$fxhashFeatures)
